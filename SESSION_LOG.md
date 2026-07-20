@@ -18,3 +18,7 @@
 - Offen: siteHostname/sitePath in js/config.js prüfen; Spalten ComplianceOfficerEmail /
   VertreterEmail in ZAPP_Konfiguration ergänzen; Bibliothek ZAPP_Anlagen anlegen;
   SPA-Plattform in der App-Registrierung ergänzen; Cron (Erinnerung/DSGVO) noch nicht gebaut.
+
+## 2026-07-20 – Fix Site-Pfad
+
+- Listen liegen auf /sites/IT (nicht /sites/zapp): js/config.js korrigiert.

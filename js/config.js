@@ -1,14 +1,12 @@
 "use strict";
 
 // Zentrale Konfiguration der ZAPP-SPA.
-// TODO vor dem ersten Start prüfen: siteHostname + sitePath auf die Site zeigen lassen,
-// auf der die Listen ZAPP und ZAPP_Konfiguration liegen.
 const ZAPP_CONFIG = {
   clientId: "c7710322-13ab-44c5-8ba1-314ca5cdb38d",
   tenantId: "fdb70646-023a-403b-a4b9-1f474a935123",
 
-  siteHostname: "dihag.sharepoint.com",   // TODO: prüfen
-  sitePath: "/sites/zapp",                // TODO: prüfen
+  siteHostname: "dihag.sharepoint.com",
+  sitePath: "/sites/IT",
 
   listName: "ZAPP",
   configListName: "ZAPP_Konfiguration",
