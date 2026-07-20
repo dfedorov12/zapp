@@ -22,3 +22,8 @@
 ## 2026-07-20 – Fix Site-Pfad
 
 - Listen liegen auf /sites/IT (nicht /sites/zapp): js/config.js korrigiert.
+
+## 2026-07-20 – Corporate Design
+
+- DIHAG-Foundry-Group-CD umgesetzt (Azurblau 17509E, Navy 1A2644, Anthrazit 424241, Lichtblau 99B7CD, Orange F08300, Schrift Exo via Google Fonts).
+- setup-zapp.ps1 (Spalten/Konfig-Zeilen/Anlagen-Bibliothek per Graph) ins Repo uebernommen.
