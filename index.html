@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ZAPP – Zuwendungs-App</title>
+  <link rel="stylesheet" href="css/styles.css">
+  <script src="https://alcdn.msauth.net/browser/2.38.1/js/msal-browser.min.js"></script>
+</head>
+<body>
+  <header>
+    <div class="header-inner">
+      <div class="brand">
+        <span class="brand-logo">Z</span>
+        <div>
+          <h1>ZAPP</h1>
+          <span class="brand-sub">Zuwendungs-App</span>
+        </div>
+      </div>
+      <div class="user-chip" id="userChip" hidden>
+        <span id="userName"></span>
+        <button id="btnLogout" class="btn-ghost" title="Abmelden">Abmelden</button>
+      </div>
+    </div>
+    <nav id="mainNav" hidden>
+      <button class="nav-btn active" data-view="neu">Neue Zuwendung</button>
+      <button class="nav-btn" data-view="meine">Meine Vorgänge</button>
+      <button class="nav-btn" data-view="genehmigungen">Genehmigungen <span class="badge-count" id="badgeGenehmigungen" hidden></span></button>
+      <button class="nav-btn" data-view="auswertung" id="navAuswertung" hidden>Auswertung</button>
+    </nav>
+  </header>
+
+  <main id="mainContent" hidden>
+
+    <!-- Neue Zuwendung -->
+    <section id="view-neu" class="view active">
+      <div class="card">
+        <h2>Zuwendung melden</h2>
+        <p class="hint">Erfassen Sie gegebene oder empfangene Geschenke, Einladungen und sonstige Zuwendungen.
+           Die App prüft automatisch, ob eine Dokumentation oder Genehmigung erforderlich ist.</p>
+
+        <form id="formZuwendung">
+          <div class="form-grid">
+            <label>Richtung *
+              <select id="fRichtung" required>
+                <option value="">– bitte wählen –</option>
+                <option>Empfangen</option>
+                <option>Geben</option>
+              </select>
+            </label>
+            <label>Art der Zuwendung *
+              <select id="fArt" required>
+                <option value="">– bitte wählen –</option>
+                <option>Geschenk</option>
+                <option>Bewirtung</option>
+                <option>Einladung Veranstaltung</option>
+                <option>Reisekosten</option>
+                <option>Sonstiges</option>
+              </select>
+            </label>
+            <label>Wert in EUR (ggf. geschätzt) *
+              <input type="number" id="fBetrag" min="0" step="0.01" required>
+            </label>
+            <label>Datum der Zuwendung *
+              <input type="date" id="fDatum" required>
+            </label>
+            <label class="span2">Beschreibung *
+              <input type="text" id="fBeschreibung" required maxlength="255" placeholder="z. B. Flasche Wein zum Jubiläum">
+            </label>
+            <label>Anlass *
+              <input type="text" id="fAnlass" required maxlength="255">
+            </label>
+            <label>Geschäftspartner (Unternehmen) *
+              <input type="text" id="fPartner" list="partnerListe" required maxlength="255" autocomplete="off">
+              <datalist id="partnerListe"></datalist>
+            </label>
+            <label>Person beim Geschäftspartner
+              <input type="text" id="fPartnerPerson" maxlength="255">
+            </label>
+            <label>Amtsträger? *
+              <select id="fAmtstraeger" required>
+                <option value="">– bitte wählen –</option>
+                <option value="Nein">Nein</option>
+                <option value="Ja">Ja</option>
+              </select>
+            </label>
+            <label class="span2">Laufende Ausschreibung, Vergabe oder Vertragsverhandlung mit diesem Partner? *
+              <select id="fAusschreibung" required>
+                <option value="">– bitte wählen –</option>
+                <option>Nein</option>
+                <option>Ja</option>
+                <option>Weiß nicht</option>
+              </select>
+            </label>
+            <label>Bereits gewährt/angenommen?
+              <select id="fGewaehrt">
+                <option>Nein</option>
+                <option>Ja</option>
+              </select>
+            </label>
+            <label>Häufigkeit
+              <select id="fWiederkehrend">
+                <option>Einmalig</option>
+                <option>Wiederkehrend</option>
+              </select>
+            </label>
+            <label class="span2">Anlagen (Rechnung, Beleg, Mailverkehr – max. 4 MB je Datei)
+              <input type="file" id="fAnlagen" multiple>
+            </label>
+            <label class="span2">Anmerkungen
+              <textarea id="fAnmerkungen" rows="3"></textarea>
+            </label>
+          </div>
+
+          <div id="bewertung" class="banner" hidden></div>
+
+          <label class="checkline">
+            <input type="checkbox" id="fBestaetigung" required>
+            Ich bestätige die Richtigkeit der Angaben.
+          </label>
+
+          <button type="submit" class="btn-primary" id="btnAbsenden">Zuwendung melden</button>
+        </form>
+      </div>
+    </section>
+
+    <!-- Meine Vorgänge -->
+    <section id="view-meine" class="view">
+      <div class="card">
+        <h2>Meine Vorgänge</h2>
+        <div id="meineListe" class="item-list"></div>
+      </div>
+    </section>
+
+    <!-- Genehmigungen -->
+    <section id="view-genehmigungen" class="view">
+      <div class="card">
+        <h2>Offene Genehmigungen</h2>
+        <div id="genehmigungenListe" class="item-list"></div>
+      </div>
+    </section>
+
+    <!-- Auswertung -->
+    <section id="view-auswertung" class="view">
+      <div class="card">
+        <h2>Auswertung (Compliance Office)</h2>
+        <div id="auswertungContent"></div>
+      </div>
+    </section>
+
+  </main>
+
+  <div id="loadingScreen">
+    <div class="spinner"></div>
+    <p id="loadingText">Anmeldung läuft …</p>
+  </div>
+
+  <!-- Detail-/Genehmigungs-Modal -->
+  <div id="detailModal" class="modal" hidden>
+    <div class="modal-content">
+      <button class="modal-close" id="btnModalClose">&times;</button>
+      <h2 id="modalTitle"></h2>
+      <div id="modalBody"></div>
+      <div id="modalActions" hidden>
+        <textarea id="modalKommentar" rows="2" placeholder="Kommentar zur Entscheidung (optional bei Genehmigung, empfohlen bei Ablehnung)"></textarea>
+        <div class="modal-btns">
+          <button class="btn-approve" id="btnGenehmigen">Genehmigen</button>
+          <button class="btn-reject" id="btnAblehnen">Ablehnen</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="toast" hidden></div>
+
+  <script src="js/config.js"></script>
+  <script src="js/graph.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>

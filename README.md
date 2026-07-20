@@ -1,0 +1,50 @@
+# ZAPP – Zuwendungs-App
+
+Compliance-App zur Erfassung, Bewertung und Genehmigung von Zuwendungen und Geschenken
+(Anti-Korruption, FCPA, UK Bribery Act). SPA auf GitHub Pages, Daten in SharePoint via
+Microsoft Graph, Anmeldung via MSAL.
+
+**Live:** https://dfedorov12.github.io/zapp/
+
+## Funktionsweise
+
+- **Neue Zuwendung**: Formular mit Live-Bewertung — beim Ausfüllen zeigt die App sofort,
+  ob der Vorgang genehmigungsfrei, dokumentationspflichtig oder genehmigungspflichtig ist.
+  Berücksichtigt: Betrag, Empfängertyp (Amtsträger), **Kumulierung** (Jahressumme je
+  Geschäftspartner) und **Red Flag** (laufende Ausschreibung/Verhandlung).
+- **Genehmigung**: zweistufig — Stufe 1 Führungskraft (Graph `manager`, Fallback CO),
+  Stufe 2 Compliance Officer. Entscheidung mit Kommentar direkt in der App,
+  Benachrichtigungen per Mail (Graph `sendMail`) mit Deep-Link (`?vorgang=<id>`).
+- **Auswertung** (nur CO/Vertreter): Statusübersicht, Top-Partner nach Jahressumme,
+  Red-Flag-Vorgänge.
+- Schwellenwerte, CO/Vertreter und Fristen kommen aus der Liste `ZAPP_Konfiguration`
+  und sind ohne Deployment änderbar.
+
+## Setup
+
+1. **Entra-App** „Dihag ZAPP“: Plattform *Single-page application* mit Redirect-URIs
+   `https://dfedorov12.github.io/zapp/` und `http://localhost:3000`.
+   Delegierte Graph-Berechtigungen: `User.Read`, `User.ReadBasic.All`,
+   `Sites.ReadWrite.All` (Admin-Consent), `Mail.Send`, `User.Read.All` (Admin-Consent,
+   für Manager-Lookup Stufe 1).
+2. **SharePoint-Site** mit:
+   - Liste `ZAPP` (Spalten siehe [ANLEITUNG.md](ANLEITUNG.md) bzw.
+     [provision-zapp-lists.ps1](provision-zapp-lists.ps1))
+   - Liste `ZAPP_Konfiguration` — zusätzlich zu den Skript-Spalten die Textspalten
+     **`ComplianceOfficerEmail`** und **`VertreterEmail`** (die App liest die E-Mails
+     daraus, da Graph Personenfelder nur als LookupId liefert)
+   - Dokumentbibliothek **`ZAPP_Anlagen`** (ein Ordner je Vorgangsnummer, von der App befüllt)
+   - Berechtigungen: Liste `ZAPP` → „Lesezugriff: nur eigene Elemente“;
+     CO/Vertreter/Genehmiger über SP-Gruppe mit Vollzugriff
+3. **`js/config.js`**: `siteHostname` und `sitePath` auf die Site zeigen lassen.
+4. Lokal testen: `python -m http.server 3000` im Repo-Ordner, dann http://localhost:3000
+
+## Offene Ausbaustufen
+
+- GitHub-Actions-Cron für Erinnerung/Eskalation und DSGVO-Archivierung
+  (Application-Permissions: `Sites.Selected` + Site-Grant, ggf. `Mail.Send` mit
+  ApplicationAccessPolicy — siehe ANLEITUNG.md)
+- Power-BI-Bericht auf der Liste `ZAPP`
+
+`ANLEITUNG.md` dokumentiert die alternative Umsetzung mit MS Forms + Power Automate
+(equeo-Original-Ansatz) inkl. Datenmodell.
