@@ -542,8 +542,14 @@ async function saveEinstellungen() {
     if (gen1modus === "Fest" && !gen1email) throw new Error("Bitte die E-Mail des festen Genehmigers angeben.");
     const admins = $("set_admins").value.split(/[;,]/).map(s => s.trim()).filter(Boolean).join("; ");
 
-    // Neue Konfig-Spalten bei Bedarf anlegen (idempotent)
-    await ensureTextColumns(ZAPP_CONFIG.configListName, ["AdminEmails", "Genehmiger1Modus", "Genehmiger1Email"]);
+    // Neue Konfig-Spalten bei Bedarf anlegen (idempotent). Schlägt fehl, wenn dem
+    // angemeldeten Nutzer das Recht „Listen verwalten" fehlt – dann muss setup-zapp.ps1
+    // einmalig als Administrator laufen.
+    const fehlend = await ensureTextColumns(ZAPP_CONFIG.configListName, ["AdminEmails", "Genehmiger1Modus", "Genehmiger1Email"]);
+    if (fehlend.length) {
+      throw new Error(`Spalten ${fehlend.join(", ")} fehlen in ZAPP_Konfiguration und konnten nicht angelegt werden `
+        + `(vermutlich fehlt das Recht „Listen verwalten"). Bitte setup-zapp.ps1 einmalig als Administrator ausführen, dann erneut speichern.`);
+    }
 
     const globalFields = {
       Title: "Allgemein",

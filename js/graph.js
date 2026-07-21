@@ -107,8 +107,9 @@ async function updateItemFields(listName, itemId, fields) {
   });
 }
 
-// Legt fehlende Textspalten in einer Liste an (idempotent). Wird beim Speichern der
-// Einstellungen aufgerufen, damit neue Konfig-Spalten nicht manuell angelegt werden müssen.
+// Legt fehlende Textspalten in einer Liste an (idempotent). Gibt die Namen der Spalten
+// zurück, die weder vorhanden waren noch angelegt werden konnten (z. B. fehlendes Recht
+// „Listen verwalten"). Leere Liste = alles vorhanden/angelegt.
 async function ensureTextColumns(listName, names) {
   const siteId = await getSiteId();
   let existing = [];
@@ -116,13 +117,19 @@ async function ensureTextColumns(listName, names) {
     const cols = await graphFetch(`/sites/${siteId}/lists/${encodeURIComponent(listName)}/columns?$select=name&$top=200`);
     existing = cols.value.map(c => c.name);
   } catch (e) { /* ignorieren – Anlegen wird versucht */ }
+  const failed = [];
   for (const name of names) {
     if (existing.includes(name)) continue;
-    await graphFetch(`/sites/${siteId}/lists/${encodeURIComponent(listName)}/columns`, {
-      method: "POST",
-      body: JSON.stringify({ name, text: {} })
-    }).catch(() => {}); // existiert evtl. schon; fehlt das Recht, schlägt das spätere Speichern sichtbar fehl
+    try {
+      await graphFetch(`/sites/${siteId}/lists/${encodeURIComponent(listName)}/columns`, {
+        method: "POST",
+        body: JSON.stringify({ name, text: {} })
+      });
+    } catch (e) {
+      failed.push(name);
+    }
   }
+  return failed;
 }
 
 // ---------------------------------------------------------------------------
