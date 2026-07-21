@@ -54,3 +54,10 @@
 - cron/zapp_cron.py (App-only, DIHAG Cron-Job 089bf9ad, Python stdlib) + .github/workflows/zapp-cron.yml (taeglich 05:00 UTC): Erinnerung/Eskalation, tenant-weite Kumulierung (Partner+Jahr ueber alle), DSGVO-Anonymisierung+Anlagenloeschung. Versand als administrator@dihag.com (Mail.Send).
 - cron/README.md: Sites.Selected+Site-Grant, Mail.Send+ApplicationAccessPolicy, Client-Secret, gh secret set.
 - harden-zapp-permissions.ps1: Versionierung, nur-eigene-Elemente, Rolle "ZAPP Erfassen" (Hinzufuegen ohne Bearbeiten) listen-bezogen.
+
+## 2026-07-20 – Cron scharfgeschaltet
+
+- GitHub-Secrets ZAPP_TENANT_ID/CLIENT_ID/CLIENT_SECRET gesetzt (Secret via addPassword->gh, 2 Jahre).
+- DIHAG Cron-Job: App-Rollen Sites.Selected + Mail.Send (Consent), Site-Grant write auf /sites/IT.
+- Testlauf erfolgreich: App-only-Token, 3 Vorgaenge gelesen, CO=administrator@dihag.com, keine Aktion faellig.
+- Offen/optional: Mail.Send per ApplicationAccessPolicy einschraenken; harden-zapp-permissions.ps1 (#3) mit Erfasser-Gruppe.
