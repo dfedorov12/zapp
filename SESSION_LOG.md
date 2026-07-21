@@ -27,3 +27,10 @@
 
 - DIHAG-Foundry-Group-CD umgesetzt (Azurblau 17509E, Navy 1A2644, Anthrazit 424241, Lichtblau 99B7CD, Orange F08300, Schrift Exo via Google Fonts).
 - setup-zapp.ps1 (Spalten/Konfig-Zeilen/Anlagen-Bibliothek per Graph) ins Repo uebernommen.
+
+## 2026-07-20 – Einstellungen-Ansicht (Rollen & Genehmiger)
+
+- Neue Admin-Ansicht "Einstellungen" (nur fuer Administratoren): Rollenmatrix (wer darf was), Rollen zuweisen (CO, Vertreter, Admins), Genehmiger-Workflow (Stufe 1 Fuehrungskraft ODER fester Genehmiger), Schwellenwerte/Fristen je Empfaengertyp.
+- Konfig-Modell erweitert: globale Zeile "Allgemein" (CO/Vertreter/AdminEmails/Genehmiger1Modus/Genehmiger1Email) + Schwellen-Zeilen je Typ. Fallback auf alte CO-Felder der Typ-Zeile.
+- App legt fehlende Konfig-Spalten beim Speichern selbst an (ensureTextColumns via Graph). setup-zapp.ps1 ergaenzt (neue Spalten + Allgemein-Zeile).
+- Verifiziert per Vorschau-Render (Struktur + CD-Farben korrekt).

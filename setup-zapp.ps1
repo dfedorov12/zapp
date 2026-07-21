@@ -29,7 +29,10 @@ $konfigDefs = @(
     @{ name = "EskalationNachTagen";      kind = "number" },
     @{ name = "AufbewahrungJahre";        kind = "number" },
     @{ name = "ComplianceOfficerEmail";   kind = "text" },
-    @{ name = "VertreterEmail";           kind = "text" }
+    @{ name = "VertreterEmail";           kind = "text" },
+    @{ name = "AdminEmails";              kind = "text" },
+    @{ name = "Genehmiger1Modus";        kind = "text" },
+    @{ name = "Genehmiger1Email";        kind = "text" }
 )
 Ensure-Columns "ZAPP_Konfiguration" $konfigDefs
 
@@ -79,6 +82,21 @@ foreach ($s in $seed) {
     Invoke-MgGraphRequest -Method POST -Uri "$g/sites/$sid/lists/ZAPP_Konfiguration/items" `
         -Body (@{ fields = $fields } | ConvertTo-Json -Depth 4) -ContentType "application/json" | Out-Null
     Write-Host "Konfig-Zeile '$($s.Title)' angelegt"
+}
+
+# --- Globale Rollen-Zeile 'Allgemein' (wird von der App-Einstellungsseite gepflegt) ---
+if (-not ($titles -contains "Allgemein")) {
+    $allg = @{
+        Title = "Allgemein"
+        ComplianceOfficerEmail = "fedorov@dihag.com"
+        VertreterEmail = "fedorov@dihag.com"
+        AdminEmails = "fedorov@dihag.com"
+        Genehmiger1Modus = "Fuehrungskraft"   # oder "Fest"
+        Genehmiger1Email = ""
+    }
+    Invoke-MgGraphRequest -Method POST -Uri "$g/sites/$sid/lists/ZAPP_Konfiguration/items" `
+        -Body (@{ fields = $allg } | ConvertTo-Json -Depth 4) -ContentType "application/json" | Out-Null
+    Write-Host "Konfig-Zeile 'Allgemein' angelegt"
 }
 
 # --- Dokumentbibliothek ZAPP_Anlagen ---------------------------------------

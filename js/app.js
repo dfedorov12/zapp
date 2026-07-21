@@ -6,9 +6,12 @@
 
 const state = {
   me: null,            // { displayName, mail }
-  config: {},          // Konfig-Zeilen je Empfängertyp: { "Nicht-Amtsträger": {...}, "Amtsträger": {...} }
+  cfgTypes: {},        // Schwellen-Zeilen je Empfängertyp: { "Nicht-Amtsträger": {...}, "Amtsträger": {...} }
+  cfgGlobal: {},       // globale Rollen/Genehmiger (aus Zeile "Allgemein")
+  cfgRowIds: {},       // Title -> Listen-Item-ID (zum Speichern der Einstellungen)
   items: [],           // alle für mich sichtbaren ZAPP-Einträge (Berechtigungen filtert SharePoint)
-  isCO: false          // bin ich Compliance Officer oder Vertreter?
+  isCO: false,         // Compliance Officer oder Vertreter?
+  isAdmin: false       // darf Einstellungen ändern?
 };
 
 const EUR = new Intl.NumberFormat("de-DE", { style: "currency", currency: "EUR" });
@@ -30,10 +33,7 @@ async function init() {
     $("userChip").hidden = false;
 
     await Promise.all([loadConfig(), loadItems()]);
-
-    state.isCO = Object.values(state.config).some(c =>
-      [c.ComplianceOfficerEmail, c.VertreterEmail].map(normMail).includes(state.me.mail));
-    $("navAuswertung").hidden = !state.isCO;
+    ermittleRollen();
 
     bindUi();
     renderAll();
@@ -56,11 +56,40 @@ async function init() {
 
 async function loadConfig() {
   const rows = await getAllItems(ZAPP_CONFIG.configListName);
-  state.config = {};
-  for (const r of rows) state.config[r.fields.Title] = r.fields;
-  if (!state.config["Nicht-Amtsträger"] || !state.config["Amtsträger"]) {
+  state.cfgTypes = {};
+  state.cfgRowIds = {};
+  let allgemein = null;
+  for (const r of rows) {
+    state.cfgRowIds[r.fields.Title] = r.id;
+    if (r.fields.Title === "Allgemein") allgemein = r.fields;
+    else state.cfgTypes[r.fields.Title] = r.fields;
+  }
+  if (!state.cfgTypes["Nicht-Amtsträger"] || !state.cfgTypes["Amtsträger"]) {
     throw new Error("ZAPP_Konfiguration unvollständig: Zeilen 'Nicht-Amtsträger' und 'Amtsträger' werden benötigt.");
   }
+  // Globale Rollen bevorzugt aus der Zeile "Allgemein"; sonst Fallback auf die
+  // (älteren) CO-/Vertreter-Felder der Nicht-Amtsträger-Zeile.
+  const g = allgemein || {};
+  const fb = state.cfgTypes["Nicht-Amtsträger"];
+  const co = normMail(g.ComplianceOfficerEmail || fb.ComplianceOfficerEmail);
+  const vertreter = normMail(g.VertreterEmail || fb.VertreterEmail);
+  let admins = (g.AdminEmails || "").split(/[;,]/).map(normMail).filter(Boolean);
+  if (admins.length === 0) admins = [co, vertreter].filter(Boolean);
+  state.cfgGlobal = {
+    ComplianceOfficerEmail: co,
+    VertreterEmail: vertreter,
+    AdminEmails: admins,
+    Genehmiger1Modus: g.Genehmiger1Modus === "Fest" ? "Fest" : "Fuehrungskraft",
+    Genehmiger1Email: normMail(g.Genehmiger1Email)
+  };
+}
+
+function ermittleRollen() {
+  const g = state.cfgGlobal;
+  state.isCO = [g.ComplianceOfficerEmail, g.VertreterEmail].filter(Boolean).includes(state.me.mail);
+  state.isAdmin = state.isCO || g.AdminEmails.includes(state.me.mail);
+  $("navAuswertung").hidden = !state.isCO;
+  $("navEinstellungen").hidden = !state.isAdmin;
 }
 
 async function loadItems() {
@@ -75,7 +104,19 @@ function normMail(m) { return (m || "").toLowerCase().trim(); }
 // ---------------------------------------------------------------------------
 
 function cfgFor(empfaengerTyp) {
-  return state.config[empfaengerTyp === "Ja" || empfaengerTyp === "Amtsträger" ? "Amtsträger" : "Nicht-Amtsträger"];
+  return state.cfgTypes[empfaengerTyp === "Ja" || empfaengerTyp === "Amtsträger" ? "Amtsträger" : "Nicht-Amtsträger"];
+}
+
+// Genehmiger für Stufe 1: fester Genehmiger oder Führungskraft (Fallback Compliance Officer)
+async function ermittleGenehmigerStufe1() {
+  const co = state.cfgGlobal.ComplianceOfficerEmail;
+  if (state.cfgGlobal.Genehmiger1Modus === "Fest") {
+    return state.cfgGlobal.Genehmiger1Email || co;
+  }
+  const manager = await getManager(state.me.mail);
+  let m = normMail(manager ? (manager.mail || manager.userPrincipalName) : "");
+  if (!m || m === state.me.mail) m = co; // kein/eigener Manager -> CO
+  return m;
 }
 
 // Jahressumme des Antragstellers beim selben Partner (ohne den aktuellen Antrag)
@@ -175,11 +216,7 @@ async function submitZuwendung(ev) {
 
     let genehmigerMail = null;
     if (erg.stufe === "genehmigung") {
-      // Stufe 1: Führungskraft; Fallback Compliance Officer
-      const manager = await getManager(state.me.mail);
-      genehmigerMail = normMail(manager ? (manager.mail || manager.userPrincipalName) : cfg.ComplianceOfficerEmail);
-      // Sonderfall: eigener Manager bin ich selbst / nicht ermittelbar → CO
-      if (!genehmigerMail || genehmigerMail === state.me.mail) genehmigerMail = normMail(cfg.ComplianceOfficerEmail);
+      genehmigerMail = await ermittleGenehmigerStufe1();
       fields.Status = "In Genehmigung Stufe 1";
       fields.GenehmigungGestartet = new Date().toISOString();
       fields.AktuellerGenehmigerEmail = genehmigerMail;
@@ -297,10 +334,10 @@ async function entscheiden(item, genehmigt) {
       <p>${escapeHtml(stempel)}</p><p><a href="${link}">Vorgang öffnen</a></p>`;
   } else if (stufe === 1 && cfg.ZweistufigAktiv) {
     update.Status = "In Genehmigung Stufe 2";
-    update.AktuellerGenehmigerEmail = normMail(cfg.ComplianceOfficerEmail);
+    update.AktuellerGenehmigerEmail = state.cfgGlobal.ComplianceOfficerEmail;
     update.ErinnerungGesendet = false;
     update.EskalationGesendet = false;
-    mailTo = normMail(cfg.ComplianceOfficerEmail);
+    mailTo = state.cfgGlobal.ComplianceOfficerEmail;
     mailSubject = `ZAPP: Genehmigung Stufe 2 erforderlich – ${f.Title} (${f.Geschaeftspartner}, ${EUR.format(f.Betrag)})`;
     mailBody = `<p>Der Vorgang <strong>${escapeHtml(f.Title)}</strong> wurde in Stufe 1 genehmigt und wartet nun auf Ihre Entscheidung (Stufe 2).</p>
       <p>${escapeHtml(stempel)}</p><p><a href="${link}">Vorgang in ZAPP öffnen und entscheiden</a></p>`;
@@ -332,6 +369,7 @@ function renderAll() {
   renderMeine();
   renderGenehmigungen();
   if (state.isCO) renderAuswertung();
+  if (state.isAdmin) renderEinstellungen();
 }
 
 function renderPartnerListe() {
@@ -417,6 +455,135 @@ function renderAuswertung() {
     <div class="item-list">${redFlags.map(i => itemCard(i)).join("") || '<p class="hint">Keine.</p>'}</div>`;
   $("auswertungContent").querySelectorAll(".item-card").forEach(el =>
     el.addEventListener("click", () => openDetail(state.items.find(i => String(i.id) === el.dataset.id))));
+}
+
+// ---------------------------------------------------------------------------
+// Einstellungen (nur Administratoren): Rollen, Genehmiger, Schwellenwerte
+// ---------------------------------------------------------------------------
+
+function renderEinstellungen() {
+  const g = state.cfgGlobal;
+  const num = v => (v == null ? "" : v);
+
+  const typBlock = (name, key) => {
+    const c = state.cfgTypes[name] || {};
+    return `
+      <fieldset class="settings-fs">
+        <legend>${escapeHtml(name)}</legend>
+        <label class="checkline"><input type="checkbox" id="set_${key}_zwei" ${c.ZweistufigAktiv ? "checked" : ""}> Zweistufige Genehmigung (Stufe 2 = Compliance Officer)</label>
+        <div class="settings-grid">
+          <label>Doku-Schwelle (€)<input type="number" step="0.01" id="set_${key}_doku" value="${num(c.DokuSchwelle)}"></label>
+          <label>Genehmigungs-Schwelle (€)<input type="number" step="0.01" id="set_${key}_gen" value="${num(c.GenehmigungsSchwelle)}"></label>
+          <label>Kumulierungs-Schwelle/Jahr (€)<input type="number" step="0.01" id="set_${key}_kum" value="${num(c.KumulierungsSchwelleJahr)}"></label>
+          <label>Erinnerung nach (Tagen)<input type="number" id="set_${key}_erin" value="${num(c.ErinnerungNachTagen)}"></label>
+          <label>Eskalation nach (Tagen)<input type="number" id="set_${key}_eska" value="${num(c.EskalationNachTagen)}"></label>
+          <label>Aufbewahrung (Jahre)<input type="number" id="set_${key}_aufb" value="${num(c.AufbewahrungJahre)}"></label>
+        </div>
+      </fieldset>`;
+  };
+
+  const gen1txt = g.Genehmiger1Modus === "Fest"
+    ? (g.Genehmiger1Email || "– (fester Genehmiger nicht gesetzt)")
+    : "Führungskraft des Antragstellers (automatisch, Fallback: Compliance Officer)";
+
+  $("einstellungenContent").innerHTML = `
+    <p class="hint">Änderungen wirken sofort für alle Nutzer. Diese Seite sehen nur Administratoren.</p>
+
+    <h3>Berechtigungen – wer darf was</h3>
+    <table class="rollen-table">
+      <tr><th>Rolle</th><th>Wer</th><th>Rechte</th></tr>
+      <tr><td>Antragsteller</td><td>alle angemeldeten Mitarbeiter</td><td>Zuwendung melden, eigene Vorgänge sehen</td></tr>
+      <tr><td>Genehmiger Stufe 1</td><td>${escapeHtml(gen1txt)}</td><td>erste Genehmigung genehmigungspflichtiger Vorgänge</td></tr>
+      <tr><td>Compliance Officer</td><td>${escapeHtml(g.ComplianceOfficerEmail || "–")}</td><td>finale Genehmigung (Stufe 2), sieht alle Vorgänge + Auswertung</td></tr>
+      <tr><td>Vertreter</td><td>${escapeHtml(g.VertreterEmail || "–")}</td><td>übernimmt für den Compliance Officer</td></tr>
+      <tr><td>Administrator</td><td>${g.AdminEmails.map(escapeHtml).join("; ") || "–"}</td><td>pflegt diese Einstellungen</td></tr>
+    </table>
+
+    <h3>Rollen zuweisen</h3>
+    <div class="settings-grid">
+      <label>Compliance Officer (E-Mail) *<input type="email" id="set_co" value="${escapeHtml(g.ComplianceOfficerEmail)}"></label>
+      <label>Vertreter (E-Mail)<input type="email" id="set_vertreter" value="${escapeHtml(g.VertreterEmail)}"></label>
+      <label class="span2">Administratoren (E-Mails, mit Semikolon getrennt)<input type="text" id="set_admins" value="${escapeHtml(g.AdminEmails.join("; "))}"></label>
+    </div>
+
+    <h3>Genehmiger-Workflow</h3>
+    <div class="settings-grid">
+      <label>Genehmigung Stufe 1
+        <select id="set_gen1modus">
+          <option value="Fuehrungskraft" ${g.Genehmiger1Modus !== "Fest" ? "selected" : ""}>Führungskraft des Antragstellers (automatisch)</option>
+          <option value="Fest" ${g.Genehmiger1Modus === "Fest" ? "selected" : ""}>Fester Genehmiger</option>
+        </select>
+      </label>
+      <label id="set_gen1email_wrap" ${g.Genehmiger1Modus === "Fest" ? "" : "hidden"}>Fester Genehmiger (E-Mail)<input type="email" id="set_gen1email" value="${escapeHtml(g.Genehmiger1Email)}"></label>
+    </div>
+    <p class="hint">Bei Amtsträgern sind die Schwellen üblicherweise 0 € – dann ist jede Zuwendung genehmigungspflichtig.</p>
+
+    <h3>Schwellenwerte &amp; Fristen</h3>
+    ${typBlock("Nicht-Amtsträger", "nat")}
+    ${typBlock("Amtsträger", "at")}
+
+    <button class="btn-primary" id="btnSaveSettings">Einstellungen speichern</button>`;
+
+  $("set_gen1modus").addEventListener("change", e => {
+    $("set_gen1email_wrap").hidden = e.target.value !== "Fest";
+  });
+  $("btnSaveSettings").addEventListener("click", saveEinstellungen);
+}
+
+async function saveEinstellungen() {
+  const btn = $("btnSaveSettings");
+  btn.disabled = true;
+  btn.textContent = "Wird gespeichert …";
+  try {
+    const co = normMail($("set_co").value);
+    if (!co) throw new Error("Compliance Officer (E-Mail) ist erforderlich.");
+    const gen1modus = $("set_gen1modus").value;
+    const gen1email = normMail($("set_gen1email").value);
+    if (gen1modus === "Fest" && !gen1email) throw new Error("Bitte die E-Mail des festen Genehmigers angeben.");
+    const admins = $("set_admins").value.split(/[;,]/).map(s => s.trim()).filter(Boolean).join("; ");
+
+    // Neue Konfig-Spalten bei Bedarf anlegen (idempotent)
+    await ensureTextColumns(ZAPP_CONFIG.configListName, ["AdminEmails", "Genehmiger1Modus", "Genehmiger1Email"]);
+
+    const globalFields = {
+      Title: "Allgemein",
+      ComplianceOfficerEmail: co,
+      VertreterEmail: normMail($("set_vertreter").value),
+      AdminEmails: admins,
+      Genehmiger1Modus: gen1modus,
+      Genehmiger1Email: gen1email
+    };
+    if (state.cfgRowIds["Allgemein"]) {
+      await updateItemFields(ZAPP_CONFIG.configListName, state.cfgRowIds["Allgemein"], globalFields);
+    } else {
+      await createItem(ZAPP_CONFIG.configListName, globalFields);
+    }
+
+    for (const [name, key] of [["Nicht-Amtsträger", "nat"], ["Amtsträger", "at"]]) {
+      const id = state.cfgRowIds[name];
+      if (!id) continue;
+      await updateItemFields(ZAPP_CONFIG.configListName, id, {
+        ZweistufigAktiv: $(`set_${key}_zwei`).checked,
+        DokuSchwelle: parseFloat($(`set_${key}_doku`).value) || 0,
+        GenehmigungsSchwelle: parseFloat($(`set_${key}_gen`).value) || 0,
+        KumulierungsSchwelleJahr: parseFloat($(`set_${key}_kum`).value) || 0,
+        ErinnerungNachTagen: parseInt($(`set_${key}_erin`).value, 10) || 0,
+        EskalationNachTagen: parseInt($(`set_${key}_eska`).value, 10) || 0,
+        AufbewahrungJahre: parseInt($(`set_${key}_aufb`).value, 10) || 0
+      });
+    }
+
+    await loadConfig();
+    ermittleRollen();
+    renderEinstellungen();
+    showToast("Einstellungen gespeichert.");
+  } catch (e) {
+    console.error(e);
+    showToast("Fehler beim Speichern: " + e.message, 8000);
+  } finally {
+    btn.disabled = false;
+    btn.textContent = "Einstellungen speichern";
+  }
 }
 
 // ---------------------------------------------------------------------------
