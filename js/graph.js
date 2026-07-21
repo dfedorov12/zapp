@@ -161,6 +161,39 @@ async function uploadAnlage(vorgangsNr, file) {
   if (!res.ok) throw new Error(`Upload von "${file.name}" fehlgeschlagen (${res.status}).`);
 }
 
+// Anlagen eines Vorgangs auflisten (Dateien im Ordner ZAPP_Anlagen/<vorgangsNr>).
+// Liefert [] wenn Bibliothek/Ordner fehlt oder keine Anlagen vorhanden sind.
+async function listAnlagen(vorgangsNr) {
+  try {
+    const driveId = await getAnlagenDriveId();
+    const res = await graphFetch(
+      `/drives/${driveId}/root:/${encodeURIComponent(vorgangsNr)}:/children?$select=id,name,size,webUrl`);
+    return (res.value || []).map(f => ({ id: f.id, name: f.name, size: f.size, webUrl: f.webUrl, driveId }));
+  } catch (e) {
+    return [];
+  }
+}
+
+// Inhalt einer Bibliotheksdatei als Base64 (für Mail-Anhänge).
+async function getDriveItemBase64(driveId, itemId) {
+  const token = await getToken();
+  const res = await fetch(`https://graph.microsoft.com/v1.0/drives/${driveId}/items/${itemId}/content`, {
+    headers: { "Authorization": "Bearer " + token }
+  });
+  if (!res.ok) throw new Error(`Download fehlgeschlagen (${res.status}).`);
+  return arrayBufferToBase64(await res.arrayBuffer());
+}
+
+function arrayBufferToBase64(buf) {
+  let binary = "";
+  const bytes = new Uint8Array(buf);
+  const chunk = 0x8000;
+  for (let i = 0; i < bytes.length; i += chunk) {
+    binary += String.fromCharCode.apply(null, bytes.subarray(i, i + chunk));
+  }
+  return btoa(binary);
+}
+
 // ---------------------------------------------------------------------------
 // Benutzer & Mail
 // ---------------------------------------------------------------------------
@@ -179,16 +212,23 @@ async function getManager(userMail) {
   }
 }
 
-async function sendMail(to, subject, htmlBody) {
+// attachments: [{ name, contentType?, contentBytes(base64) }]
+async function sendMail(to, subject, htmlBody, attachments = []) {
+  const message = {
+    subject,
+    body: { contentType: "HTML", content: htmlBody },
+    toRecipients: (Array.isArray(to) ? to : [to]).filter(Boolean).map(a => ({ emailAddress: { address: a } }))
+  };
+  if (attachments && attachments.length) {
+    message.attachments = attachments.map(a => ({
+      "@odata.type": "#microsoft.graph.fileAttachment",
+      name: a.name,
+      contentType: a.contentType || "application/octet-stream",
+      contentBytes: a.contentBytes
+    }));
+  }
   await graphFetch("/me/sendMail", {
     method: "POST",
-    body: JSON.stringify({
-      message: {
-        subject,
-        body: { contentType: "HTML", content: htmlBody },
-        toRecipients: [{ emailAddress: { address: to } }]
-      },
-      saveToSentItems: true
-    })
+    body: JSON.stringify({ message, saveToSentItems: true })
   });
 }

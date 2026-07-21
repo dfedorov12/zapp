@@ -38,3 +38,8 @@
 ## 2026-07-20 – Rollen: fedorov = einfacher Nutzer
 
 - CO/Vertreter/Admin = administrator@dihag.com (nicht mehr fedorov). setup-zapp.ps1: Variable $AdminEmail, Allgemein-Zeile als Upsert (korrigiert bereits geseedete fedorov-Werte).
+
+## 2026-07-20 – Anlagen anzeigen + per Mail mitschicken
+
+- Detail-/Genehmigungsdialog: Anlagen als anklickbare Links (webUrl, oeffnen in SharePoint/Office online) via listAnlagen; formatBytes-Anzeige.
+- Genehmigungs-Mails haengen die Anlagen an: Stufe 1 direkt aus den ausgewaehlten Dateien, Stufe 2 (an CO) aus der Bibliothek (getDriveItemBase64). Graph sendMail um fileAttachment erweitert, Gesamtgroesse via mailMaxTotalBytes (3 MB) begrenzt.

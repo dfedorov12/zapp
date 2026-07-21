@@ -240,12 +240,14 @@ async function submitZuwendung(ev) {
       await uploadAnlage(vorgangsNr, file);
     }
 
-    // Benachrichtigung an Genehmiger
+    // Benachrichtigung an Genehmiger – mit Anlagen im Anhang
     if (genehmigerMail) {
+      const mailAnlagen = await mailAttachmentsFromFiles(files).catch(() => []);
       await sendMail(
         genehmigerMail,
         `ZAPP: Genehmigung erforderlich – ${vorgangsNr} (${fields.Geschaeftspartner}, ${EUR.format(betrag)})`,
-        mailHtml(created.id, vorgangsNr, fields, erg)
+        mailHtml(created.id, vorgangsNr, fields, erg),
+        mailAnlagen
       ).catch(e => showToast("Vorgang gespeichert, aber Mail fehlgeschlagen: " + e.message));
     }
 
@@ -291,6 +293,34 @@ function mailHtml(itemId, vorgangsNr, f, erg) {
     <p style="color:#888;font-size:12px">Diese Nachricht wurde automatisch von der ZAPP (Zuwendungs-App) erstellt.</p>`;
 }
 
+// Mail-Anhänge aus lokal ausgewählten Dateien (beim Einreichen), begrenzt auf die
+// Gesamtgröße mailMaxTotalBytes. Zu große Dateien bleiben nur in der Bibliothek.
+async function mailAttachmentsFromFiles(files) {
+  const out = [];
+  let total = 0;
+  for (const file of files) {
+    if (file.size > ZAPP_CONFIG.maxAttachmentBytes) continue;
+    if (total + file.size > ZAPP_CONFIG.mailMaxTotalBytes) break;
+    out.push({ name: file.name, contentType: file.type, contentBytes: arrayBufferToBase64(await file.arrayBuffer()) });
+    total += file.size;
+  }
+  return out;
+}
+
+// Mail-Anhänge aus der Bibliothek (z. B. für die Stufe-2-Mail an den Compliance Officer).
+async function mailAttachmentsFromLibrary(vorgangsNr) {
+  const out = [];
+  let total = 0;
+  for (const f of await listAnlagen(vorgangsNr)) {
+    if (total + (f.size || 0) > ZAPP_CONFIG.mailMaxTotalBytes) break;
+    try {
+      out.push({ name: f.name, contentBytes: await getDriveItemBase64(f.driveId, f.id) });
+      total += f.size || 0;
+    } catch (e) { /* Datei überspringen */ }
+  }
+  return out;
+}
+
 // ---------------------------------------------------------------------------
 // Genehmigung
 // ---------------------------------------------------------------------------
@@ -323,7 +353,7 @@ async function entscheiden(item, genehmigt) {
   update[`Entscheidung${stufe}`] = genehmigt ? "Genehmigt" : "Abgelehnt";
   update[`Kommentar${stufe}`] = stempel;
 
-  let mailTo, mailSubject, mailBody;
+  let mailTo, mailSubject, mailBody, mailAttachments = [];
   const link = `${location.origin}${location.pathname}?vorgang=${item.id}`;
 
   if (!genehmigt) {
@@ -341,6 +371,7 @@ async function entscheiden(item, genehmigt) {
     mailSubject = `ZAPP: Genehmigung Stufe 2 erforderlich – ${f.Title} (${f.Geschaeftspartner}, ${EUR.format(f.Betrag)})`;
     mailBody = `<p>Der Vorgang <strong>${escapeHtml(f.Title)}</strong> wurde in Stufe 1 genehmigt und wartet nun auf Ihre Entscheidung (Stufe 2).</p>
       <p>${escapeHtml(stempel)}</p><p><a href="${link}">Vorgang in ZAPP öffnen und entscheiden</a></p>`;
+    mailAttachments = await mailAttachmentsFromLibrary(f.Title).catch(() => []);
   } else {
     update.Status = "Genehmigt";
     mailTo = f.AntragstellerEmail;
@@ -351,7 +382,7 @@ async function entscheiden(item, genehmigt) {
 
   await updateItemFields(ZAPP_CONFIG.listName, item.id, update);
   if (mailTo) {
-    await sendMail(mailTo, mailSubject, mailBody)
+    await sendMail(mailTo, mailSubject, mailBody, mailAttachments)
       .catch(e => showToast("Entscheidung gespeichert, aber Mail fehlgeschlagen: " + e.message));
   }
   closeModal();
@@ -622,10 +653,36 @@ function openDetail(item) {
       ${zeile("Entscheidung Stufe 2", f.Kommentar2)}
       ${zeile("Anmerkungen", f.Anmerkungen)}
     </table>
-    <p class="hint">Anlagen: Ordner „${escapeHtml(f.Title || "")}" in der Bibliothek ${escapeHtml(ZAPP_CONFIG.attachmentsLibrary)}.</p>`;
+    <div class="anlagen-box">
+      <strong>Anlagen</strong>
+      <div id="modalAnlagen" class="anlagen-list">Anlagen werden geladen …</div>
+    </div>`;
   $("modalKommentar").value = "";
   $("modalActions").hidden = !darfEntscheiden(item);
   $("detailModal").hidden = false;
+  ladeAnlagenInModal(f.Title);
+}
+
+// Lädt die Anlagen eines Vorgangs in den Detail-Dialog (anklickbar zum Öffnen).
+async function ladeAnlagenInModal(vorgangsNr) {
+  const box = $("modalAnlagen");
+  if (!box) return;
+  try {
+    const files = await listAnlagen(vorgangsNr);
+    if (!files.length) { box.innerHTML = '<span class="muted">Keine Anlagen vorhanden.</span>'; return; }
+    box.innerHTML = files.map(f =>
+      `<a href="${escapeHtml(f.webUrl)}" target="_blank" rel="noopener">📎 ${escapeHtml(f.name)} <span class="muted">(${formatBytes(f.size)})</span></a>`
+    ).join("");
+  } catch (e) {
+    box.innerHTML = '<span class="muted">Anlagen konnten nicht geladen werden.</span>';
+  }
+}
+
+function formatBytes(n) {
+  if (!n && n !== 0) return "";
+  if (n < 1024) return n + " B";
+  if (n < 1024 * 1024) return (n / 1024).toFixed(0) + " KB";
+  return (n / 1024 / 1024).toFixed(1) + " MB";
 }
 
 function closeModal() {

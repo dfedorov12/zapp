@@ -180,6 +180,14 @@ input:focus, select:focus, textarea:focus { outline: 2px solid var(--primary); o
 .detail-table { border-collapse: collapse; width: 100%; font-size: 14px; }
 .detail-table td { padding: 5px 8px; border-bottom: 1px solid var(--border); vertical-align: top; }
 .detail-table .dt { color: var(--muted); width: 220px; }
+.anlagen-box { margin-top: 16px; border-top: 1px solid var(--border); padding-top: 12px; }
+.anlagen-box strong { font-size: 13px; color: var(--muted); text-transform: uppercase; letter-spacing: .04em; }
+.anlagen-list { display: flex; flex-direction: column; gap: 6px; margin-top: 8px; }
+.anlagen-list a {
+  color: var(--azur); text-decoration: none; font-size: 14px;
+  padding: 6px 10px; border: 1px solid var(--border); border-radius: 7px; background: var(--bg);
+}
+.anlagen-list a:hover { border-color: var(--azur); }
 #modalActions { margin-top: 16px; }
 #modalActions textarea { width: 100%; margin-bottom: 10px; }
 .modal-btns { display: flex; gap: 10px; }

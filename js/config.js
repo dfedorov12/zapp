@@ -15,5 +15,8 @@ const ZAPP_CONFIG = {
   // User.Read.All nur nötig, wenn Genehmigungsstufe 1 über die Führungskraft (Get manager) läuft.
   graphScopes: ["User.Read", "User.ReadBasic.All", "Sites.ReadWrite.All", "Mail.Send", "User.Read.All"],
 
-  maxAttachmentBytes: 4 * 1024 * 1024
+  maxAttachmentBytes: 4 * 1024 * 1024,
+  // Gesamtgröße der inline an eine Mail angehängten Anlagen. Graph /sendMail begrenzt
+  // die gesamte Nachricht auf ~4 MB; darüber liegende Dateien bleiben nur in der App/Bibliothek.
+  mailMaxTotalBytes: 3 * 1024 * 1024
 };
