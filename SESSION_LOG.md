@@ -43,3 +43,8 @@
 
 - Detail-/Genehmigungsdialog: Anlagen als anklickbare Links (webUrl, oeffnen in SharePoint/Office online) via listAnlagen; formatBytes-Anzeige.
 - Genehmigungs-Mails haengen die Anlagen an: Stufe 1 direkt aus den ausgewaehlten Dateien, Stufe 2 (an CO) aus der Bibliothek (getDriveItemBase64). Graph sendMail um fileAttachment erweitert, Gesamtgroesse via mailMaxTotalBytes (3 MB) begrenzt.
+
+## 2026-07-20 – Filter/CSV (#6) + Aenderungssperre-Vorbereitung (#3)
+
+- Filter/Suche in "Meine Vorgaenge" und "Auswertung" (Text/Status/Jahr), fokus-erhaltend; CSV-Export (de, Semikolon, UTF-8-BOM) der gefilterten Auswertung.
+- Vorgangsnummer wird jetzt beim Anlegen gesetzt (ZW-JJJJ-MMTT-HHMMSS-RRR), kein Nach-Update mehr -> Antragsteller brauchen nur "Hinzufuegen", nicht "Bearbeiten" (Grundlage fuer Aenderungssperre).

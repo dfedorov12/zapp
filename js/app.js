@@ -11,7 +11,9 @@ const state = {
   cfgRowIds: {},       // Title -> Listen-Item-ID (zum Speichern der Einstellungen)
   items: [],           // alle für mich sichtbaren ZAPP-Einträge (Berechtigungen filtert SharePoint)
   isCO: false,         // Compliance Officer oder Vertreter?
-  isAdmin: false       // darf Einstellungen ändern?
+  isAdmin: false,      // darf Einstellungen ändern?
+  fMeine: { text: "", status: "" },          // Filter „Meine Vorgänge"
+  fAlle: { text: "", status: "", jahr: "" }  // Filter „Alle Vorgänge" (Auswertung)
 };
 
 const EUR = new Intl.NumberFormat("de-DE", { style: "currency", currency: "EUR" });
@@ -198,7 +200,13 @@ async function submitZuwendung(ev) {
     anmerkungen = `Bereits gewährt/angenommen: ${$("fGewaehrt").value} · Häufigkeit: ${$("fWiederkehrend").value}`
       + (anmerkungen ? "\n\n" + anmerkungen : "");
 
+    // Vorgangsnummer schon beim Anlegen setzen (kein Nach-Update nötig) – so genügt
+    // Antragstellern das Recht „Hinzufügen" ohne „Bearbeiten" (Schutz vor nachträglicher
+    // Änderung eingereichter Zuwendungen, siehe Änderungssperre).
+    const vorgangsNr = `ZW-${jahr}-${vorgangsStempel()}`;
+
     const fields = {
+      Title: vorgangsNr,
       Richtung: $("fRichtung").value,
       ArtZuwendung: $("fArt").value,
       Beschreibung: $("fBeschreibung").value.trim(),
@@ -227,8 +235,6 @@ async function submitZuwendung(ev) {
     }
 
     const created = await createItem(ZAPP_CONFIG.listName, fields);
-    const vorgangsNr = `ZW-${jahr}-${String(created.id).padStart(4, "0")}`;
-    await updateItemFields(ZAPP_CONFIG.listName, created.id, { Title: vorgangsNr });
 
     // Anlagen hochladen
     const files = Array.from($("fAnlagen").files || []);
@@ -432,11 +438,93 @@ function itemCard(item, aktionen = "") {
 
 function renderMeine() {
   const meine = state.items.filter(i => normMail(i.fields.AntragstellerEmail) === state.me.mail);
-  $("meineListe").innerHTML = meine.length
-    ? meine.map(i => itemCard(i)).join("")
-    : '<p class="hint">Noch keine Vorgänge vorhanden.</p>';
-  $("meineListe").querySelectorAll(".item-card").forEach(el =>
+  buildFilterBar("meineFilter", state.fMeine, meine, { jahr: false, csv: null }, renderMeineResults);
+  renderMeineResults();
+}
+
+function renderMeineResults() {
+  const list = state.items
+    .filter(i => normMail(i.fields.AntragstellerEmail) === state.me.mail)
+    .filter(i => passtFilter(i, state.fMeine));
+  $("meineListe").innerHTML = list.length
+    ? list.map(i => itemCard(i)).join("")
+    : '<p class="hint">Keine Vorgänge für diesen Filter.</p>';
+  bindCards($("meineListe"));
+}
+
+// --- Filter & Export -------------------------------------------------------
+
+function passtFilter(item, f) {
+  const fi = item.fields;
+  if (f.status && fi.Status !== f.status) return false;
+  if (f.jahr && !(fi.DatumZuwendung && new Date(fi.DatumZuwendung).getFullYear() === +f.jahr)) return false;
+  if (f.text) {
+    const hay = [fi.Title, fi.Geschaeftspartner, fi.PartnerPerson, fi.Anlass, fi.Beschreibung, fi.AntragstellerEmail]
+      .map(x => (x || "").toLowerCase()).join(" ");
+    if (!hay.includes(f.text.toLowerCase())) return false;
+  }
+  return true;
+}
+
+// Baut eine Filterleiste (Text + Status, optional Jahr + CSV-Button). onChange rendert
+// nur die Ergebnisliste neu, damit beim Tippen der Fokus im Suchfeld erhalten bleibt.
+function buildFilterBar(containerId, fstate, items, opts, onChange) {
+  const el = $(containerId);
+  const statuses = [...new Set(items.map(i => i.fields.Status).filter(Boolean))].sort();
+  const jahre = [...new Set(items.map(i => i.fields.DatumZuwendung && new Date(i.fields.DatumZuwendung).getFullYear()).filter(Boolean))].sort((a, b) => b - a);
+  el.innerHTML = `
+    <input type="search" id="${containerId}_text" placeholder="Suche: Nr., Partner, Anlass …" value="${escapeHtml(fstate.text || "")}">
+    <select id="${containerId}_status"><option value="">Alle Status</option>${statuses.map(s => `<option ${fstate.status === s ? "selected" : ""}>${escapeHtml(s)}</option>`).join("")}</select>
+    ${opts.jahr ? `<select id="${containerId}_jahr"><option value="">Alle Jahre</option>${jahre.map(j => `<option ${String(fstate.jahr) === String(j) ? "selected" : ""}>${j}</option>`).join("")}</select>` : ""}
+    ${opts.csv ? `<button class="btn-csv" id="${containerId}_csv">CSV-Export</button>` : ""}`;
+  $(`${containerId}_text`).addEventListener("input", e => { fstate.text = e.target.value; onChange(); });
+  $(`${containerId}_status`).addEventListener("change", e => { fstate.status = e.target.value; onChange(); });
+  if (opts.jahr) $(`${containerId}_jahr`).addEventListener("change", e => { fstate.jahr = e.target.value; onChange(); });
+  if (opts.csv) $(`${containerId}_csv`).addEventListener("click", opts.csv);
+}
+
+function bindCards(container) {
+  container.querySelectorAll(".item-card").forEach(el =>
     el.addEventListener("click", () => openDetail(state.items.find(i => String(i.id) === el.dataset.id))));
+}
+
+const CSV_COLS = [
+  { h: "Vorgang", f: i => i.Title },
+  { h: "Status", f: i => i.Status },
+  { h: "Richtung", f: i => i.Richtung },
+  { h: "Art", f: i => i.ArtZuwendung },
+  { h: "Betrag (EUR)", f: i => numDe(i.Betrag) },
+  { h: "Datum", f: i => i.DatumZuwendung ? new Date(i.DatumZuwendung).toLocaleDateString("de-DE") : "" },
+  { h: "Geschäftspartner", f: i => i.Geschaeftspartner },
+  { h: "Person Partner", f: i => i.PartnerPerson },
+  { h: "Empfängertyp", f: i => i.EmpfaengerTyp },
+  { h: "Red Flag", f: i => i.RedFlag ? "Ja" : "Nein" },
+  { h: "Antragsteller", f: i => i.AntragstellerEmail },
+  { h: "Jahressumme Partner", f: i => numDe(i.KumulierteSummeJahr) },
+  { h: "Entscheidung Stufe 1", f: i => i.Kommentar1 },
+  { h: "Entscheidung Stufe 2", f: i => i.Kommentar2 }
+];
+
+function numDe(v) { return v == null || v === "" ? "" : String(v).replace(".", ","); }
+
+function csvCell(v) {
+  if (v == null) return "";
+  let s = String(v);
+  if (/[";\r\n]/.test(s)) s = '"' + s.replace(/"/g, '""') + '"';
+  return s;
+}
+
+function exportCsv(items, filename) {
+  const sep = ";";
+  const bom = String.fromCharCode(0xFEFF); // Excel erkennt UTF-8 (Umlaute)
+  const head = CSV_COLS.map(c => c.h).join(sep);
+  const rows = items.map(i => CSV_COLS.map(c => csvCell(c.f(i.fields))).join(sep));
+  const csv = bom + [head, ...rows].join("\r\n");
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(new Blob([csv], { type: "text/csv;charset=utf-8;" }));
+  a.download = filename;
+  a.click();
+  URL.revokeObjectURL(a.href);
 }
 
 function renderGenehmigungen() {
@@ -483,8 +571,41 @@ function renderAuswertung() {
       ${top.map(([p, v]) => `<tr><td>${escapeHtml(p)}</td><td>${EUR.format(v.jahr)}</td><td>${EUR.format(v.gesamt)}</td><td>${v.anzahl}</td></tr>`).join("")}
     </table>
     <h3>Red-Flag-Vorgänge (${redFlags.length})</h3>
-    <div class="item-list">${redFlags.map(i => itemCard(i)).join("") || '<p class="hint">Keine.</p>'}</div>`;
-  $("auswertungContent").querySelectorAll(".item-card").forEach(el =>
+    <div class="item-list">${redFlags.map(i => itemCard(i)).join("") || '<p class="hint">Keine.</p>'}</div>
+
+    <h3>Alle Vorgänge</h3>
+    <div id="alleFilter" class="filter-bar"></div>
+    <div id="alleResults"></div>`;
+  bindCards($("auswertungContent"));
+
+  buildFilterBar("alleFilter", state.fAlle, aktiv, {
+    jahr: true,
+    csv: () => {
+      const gefiltert = aktiv.filter(i => passtFilter(i, state.fAlle));
+      exportCsv(gefiltert, `ZAPP_Export_${new Date().toISOString().slice(0, 10)}.csv`);
+    }
+  }, renderAlleResults);
+  renderAlleResults();
+}
+
+function renderAlleResults() {
+  const box = $("alleResults");
+  if (!box) return;
+  const list = state.items
+    .filter(i => i.fields.Status !== "Archiviert")
+    .filter(i => passtFilter(i, state.fAlle));
+  box.innerHTML = `<p class="muted">${list.length} Vorgänge</p>
+    <div class="table-scroll"><table class="report-table">
+      <tr><th>Vorgang</th><th>Status</th><th>Geschäftspartner</th><th>Betrag</th><th>Datum</th><th>Antragsteller</th></tr>
+      ${list.map(i => { const f = i.fields; return `<tr class="row-click" data-id="${i.id}">
+        <td>${escapeHtml(f.Title || "")}${f.RedFlag ? ' <span class="redflag">⚠</span>' : ""}</td>
+        <td>${escapeHtml(f.Status || "")}</td>
+        <td>${escapeHtml(f.Geschaeftspartner || "")}</td>
+        <td>${EUR.format(f.Betrag || 0)}</td>
+        <td>${f.DatumZuwendung ? new Date(f.DatumZuwendung).toLocaleDateString("de-DE") : ""}</td>
+        <td>${escapeHtml(f.AntragstellerEmail || "")}</td></tr>`; }).join("")}
+    </table></div>`;
+  box.querySelectorAll(".row-click").forEach(el =>
     el.addEventListener("click", () => openDetail(state.items.find(i => String(i.id) === el.dataset.id))));
 }
 
@@ -721,6 +842,13 @@ function bindUi() {
 function escapeHtml(s) {
   return String(s).replace(/[&<>"']/g, c =>
     ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+}
+
+// Eindeutiger Suffix für die Vorgangsnummer (MMTT-HHMMSS-RRR), ohne zweiten Schreibvorgang.
+function vorgangsStempel() {
+  const d = new Date();
+  const p = n => String(n).padStart(2, "0");
+  return `${p(d.getMonth() + 1)}${p(d.getDate())}-${p(d.getHours())}${p(d.getMinutes())}${p(d.getSeconds())}-${Math.floor(Math.random() * 900 + 100)}`;
 }
 
 let _toastTimer = null;

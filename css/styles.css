@@ -129,6 +129,19 @@ input:focus, select:focus, textarea:focus { outline: 2px solid var(--primary); o
 .st-red { background: var(--red-bg); color: var(--red); }
 .st-gray { background: #eceff2; color: var(--muted); }
 
+/* Filterleiste */
+.filter-bar { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 14px; align-items: center; }
+.filter-bar input[type="search"] { flex: 1 1 220px; min-width: 160px; }
+.filter-bar select { flex: 0 0 auto; }
+.btn-csv {
+  margin-left: auto; background: var(--lichtblau); color: var(--navy); border: none;
+  border-radius: 7px; padding: 8px 16px; font-size: 13px; font-weight: 600; cursor: pointer;
+}
+.btn-csv:hover { background: #86a8c1; }
+.table-scroll { overflow-x: auto; }
+.row-click { cursor: pointer; }
+.row-click:hover td { background: var(--bg); }
+
 /* Auswertung */
 .stat-row { display: flex; flex-wrap: wrap; gap: 12px; margin-bottom: 20px; }
 .stat-tile {
