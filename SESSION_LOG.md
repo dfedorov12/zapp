@@ -48,3 +48,9 @@
 
 - Filter/Suche in "Meine Vorgaenge" und "Auswertung" (Text/Status/Jahr), fokus-erhaltend; CSV-Export (de, Semikolon, UTF-8-BOM) der gefilterten Auswertung.
 - Vorgangsnummer wird jetzt beim Anlegen gesetzt (ZW-JJJJ-MMTT-HHMMSS-RRR), kein Nach-Update mehr -> Antragsteller brauchen nur "Hinzufuegen", nicht "Bearbeiten" (Grundlage fuer Aenderungssperre).
+
+## 2026-07-20 – Cron (#1/#4) + Haertung (#3/#2)
+
+- cron/zapp_cron.py (App-only, DIHAG Cron-Job 089bf9ad, Python stdlib) + .github/workflows/zapp-cron.yml (taeglich 05:00 UTC): Erinnerung/Eskalation, tenant-weite Kumulierung (Partner+Jahr ueber alle), DSGVO-Anonymisierung+Anlagenloeschung. Versand als administrator@dihag.com (Mail.Send).
+- cron/README.md: Sites.Selected+Site-Grant, Mail.Send+ApplicationAccessPolicy, Client-Secret, gh secret set.
+- harden-zapp-permissions.ps1: Versionierung, nur-eigene-Elemente, Rolle "ZAPP Erfassen" (Hinzufuegen ohne Bearbeiten) listen-bezogen.

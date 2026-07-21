@@ -39,12 +39,23 @@ Microsoft Graph, Anmeldung via MSAL.
 3. **`js/config.js`**: `siteHostname` und `sitePath` auf die Site zeigen lassen.
 4. Lokal testen: `python -m http.server 3000` im Repo-Ordner, dann http://localhost:3000
 
+## Cron (Erinnerung, Eskalation, Kumulierung, DSGVO)
+
+App-only-Job unter [cron/](cron/), täglich via GitHub Actions. Erledigt Erinnerung/Eskalation
+offener Genehmigungen, tenant-weite Kumulierungsprüfung (über alle Antragsteller) und die
+DSGVO-Archivierung. Läuft mit der App *DIHAG Cron-Job*, versendet als administrator@dihag.com.
+Einrichtung: [cron/README.md](cron/README.md).
+
+## Berechtigungen härten
+
+[harden-zapp-permissions.ps1](harden-zapp-permissions.ps1) (PnP) setzt listen-bezogen:
+Versionierung (Audit), „nur eigene Elemente" und die Stufe „ZAPP Erfassen" (Hinzufügen ohne
+Bearbeiten) → eingereichte Zuwendungen sind unveränderbar. Berührt die übrige IT-Site nicht.
+
 ## Offene Ausbaustufen
 
-- GitHub-Actions-Cron für Erinnerung/Eskalation und DSGVO-Archivierung
-  (Application-Permissions: `Sites.Selected` + Site-Grant, ggf. `Mail.Send` mit
-  ApplicationAccessPolicy — siehe ANLEITUNG.md)
 - Power-BI-Bericht auf der Liste `ZAPP`
+- Zurückziehen/Korrigieren vor der ersten Genehmigung; EN-Sprachversion
 
 `ANLEITUNG.md` dokumentiert die alternative Umsetzung mit MS Forms + Power Automate
 (equeo-Original-Ansatz) inkl. Datenmodell.

@@ -1,0 +1,28 @@
+name: ZAPP Cron
+
+# Erinnerung/Eskalation, tenant-weite Kumulierung und DSGVO-Archivierung.
+# Laeuft taeglich; kann auch manuell gestartet werden (Run workflow).
+
+on:
+  schedule:
+    - cron: "0 5 * * *"   # 05:00 UTC (ca. 06:00/07:00 Uhr DE)
+  workflow_dispatch: {}
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: ZAPP Cron ausfuehren
+        env:
+          ZAPP_TENANT_ID: ${{ secrets.ZAPP_TENANT_ID }}
+          ZAPP_CLIENT_ID: ${{ secrets.ZAPP_CLIENT_ID }}
+          ZAPP_CLIENT_SECRET: ${{ secrets.ZAPP_CLIENT_SECRET }}
+          ZAPP_SITE_HOST: dihag.sharepoint.com
+          ZAPP_SITE_PATH: /sites/IT
+          ZAPP_SENDER: administrator@dihag.com
+          ZAPP_APP_URL: https://dfedorov12.github.io/zapp/
+        run: python cron/zapp_cron.py
