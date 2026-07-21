@@ -2,6 +2,10 @@
 $ErrorActionPreference = "Stop"
 $g = "https://graph.microsoft.com/v1.0"
 
+# Compliance Officer / Vertreter / Administrator der ZAPP.
+# fedorov@dihag.com ist bewusst NICHT hier -> einfacher Nutzer ohne Einstellungsrechte.
+$AdminEmail = "administrator@dihag.com"
+
 $site = Invoke-MgGraphRequest -Method GET -Uri "$g/sites/dihag.sharepoint.com:/sites/IT"
 $sid = $site.id
 Write-Host "Site gefunden: $($site.webUrl)"
@@ -76,8 +80,8 @@ foreach ($s in $seed) {
     $fields = $s + @{
         ZweistufigAktiv = $true
         ErinnerungNachTagen = 3; EskalationNachTagen = 7; AufbewahrungJahre = 6
-        ComplianceOfficerEmail = "fedorov@dihag.com"
-        VertreterEmail = "fedorov@dihag.com"
+        ComplianceOfficerEmail = $AdminEmail
+        VertreterEmail = $AdminEmail
     }
     Invoke-MgGraphRequest -Method POST -Uri "$g/sites/$sid/lists/ZAPP_Konfiguration/items" `
         -Body (@{ fields = $fields } | ConvertTo-Json -Depth 4) -ContentType "application/json" | Out-Null
@@ -85,18 +89,23 @@ foreach ($s in $seed) {
 }
 
 # --- Globale Rollen-Zeile 'Allgemein' (wird von der App-Einstellungsseite gepflegt) ---
-if (-not ($titles -contains "Allgemein")) {
-    $allg = @{
-        Title = "Allgemein"
-        ComplianceOfficerEmail = "fedorov@dihag.com"
-        VertreterEmail = "fedorov@dihag.com"
-        AdminEmails = "fedorov@dihag.com"
-        Genehmiger1Modus = "Fuehrungskraft"   # oder "Fest"
-        Genehmiger1Email = ""
-    }
+# Upsert: legt die Zeile an oder korrigiert die Rollenfelder (falls zuvor mit fedorov geseedet).
+$allgFields = @{
+    ComplianceOfficerEmail = $AdminEmail
+    VertreterEmail = $AdminEmail
+    AdminEmails = $AdminEmail
+    Genehmiger1Modus = "Fuehrungskraft"   # oder "Fest"
+    Genehmiger1Email = ""
+}
+$allgRow = $rows | Where-Object { $_.fields.Title -eq "Allgemein" } | Select-Object -First 1
+if ($allgRow) {
+    Invoke-MgGraphRequest -Method PATCH -Uri "$g/sites/$sid/lists/ZAPP_Konfiguration/items/$($allgRow.id)/fields" `
+        -Body ($allgFields | ConvertTo-Json -Depth 4) -ContentType "application/json" | Out-Null
+    Write-Host "Konfig-Zeile 'Allgemein' aktualisiert (CO/Admin = $AdminEmail)"
+} else {
     Invoke-MgGraphRequest -Method POST -Uri "$g/sites/$sid/lists/ZAPP_Konfiguration/items" `
-        -Body (@{ fields = $allg } | ConvertTo-Json -Depth 4) -ContentType "application/json" | Out-Null
-    Write-Host "Konfig-Zeile 'Allgemein' angelegt"
+        -Body (@{ fields = ($allgFields + @{ Title = "Allgemein" }) } | ConvertTo-Json -Depth 4) -ContentType "application/json" | Out-Null
+    Write-Host "Konfig-Zeile 'Allgemein' angelegt (CO/Admin = $AdminEmail)"
 }
 
 # --- Dokumentbibliothek ZAPP_Anlagen ---------------------------------------

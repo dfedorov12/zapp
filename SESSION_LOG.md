@@ -34,3 +34,7 @@
 - Konfig-Modell erweitert: globale Zeile "Allgemein" (CO/Vertreter/AdminEmails/Genehmiger1Modus/Genehmiger1Email) + Schwellen-Zeilen je Typ. Fallback auf alte CO-Felder der Typ-Zeile.
 - App legt fehlende Konfig-Spalten beim Speichern selbst an (ensureTextColumns via Graph). setup-zapp.ps1 ergaenzt (neue Spalten + Allgemein-Zeile).
 - Verifiziert per Vorschau-Render (Struktur + CD-Farben korrekt).
+
+## 2026-07-20 – Rollen: fedorov = einfacher Nutzer
+
+- CO/Vertreter/Admin = administrator@dihag.com (nicht mehr fedorov). setup-zapp.ps1: Variable $AdminEmail, Allgemein-Zeile als Upsert (korrigiert bereits geseedete fedorov-Werte).
