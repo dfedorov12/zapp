@@ -69,3 +69,4 @@
 ## 2026-07-23 – Compliance Officer = compliance@dihag.com
 
 - CO (Stufe-2-Genehmigung + Benachrichtigungen) = compliance@dihag.com; Admin/Vertreter bleiben administrator@dihag.com. setup-zapp.ps1: $CoEmail eingefuehrt, Allgemein-Upsert + Typ-Zeilen-Seed getrennt.
+- Live-Umstellung via neuem App-only Workflow zapp-admin.yml + cron/set_config.py (kein SharePoint-Login): Allgemein CO=compliance@dihag.com, Vertreter/Admin=administrator@dihag.com bestaetigt.
