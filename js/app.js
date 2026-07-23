@@ -405,8 +405,17 @@ function renderAll() {
   renderPartnerListe();
   renderMeine();
   renderGenehmigungen();
+  renderHilfe();
   if (state.isCO) renderAuswertung();
   if (state.isAdmin) renderEinstellungen();
+}
+
+function renderHilfe() {
+  const a = $("hilfeCo");
+  const co = state.cfgGlobal.ComplianceOfficerEmail;
+  if (!a) return;
+  if (co) { a.href = "mailto:" + co; a.textContent = co; }
+  else { a.removeAttribute("href"); a.textContent = "Compliance Office"; }
 }
 
 function renderPartnerListe() {

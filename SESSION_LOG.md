@@ -61,3 +61,7 @@
 - DIHAG Cron-Job: App-Rollen Sites.Selected + Mail.Send (Consent), Site-Grant write auf /sites/IT.
 - Testlauf erfolgreich: App-only-Token, 3 Vorgaenge gelesen, CO=administrator@dihag.com, keine Aktion faellig.
 - Offen/optional: Mail.Send per ApplicationAccessPolicy einschraenken; harden-zapp-permissions.ps1 (#3) mit Erfasser-Gruppe.
+
+## 2026-07-20 – Hilfe-Reiter
+
+- Reiter "Hilfe" fuer alle Nutzer (nicht versteckt): kurze Doku (Zweck, was melden, Ampel-Bewertung gruen/gelb/rot, Ablauf, Meine Vorgaenge/Anlagen, Datenschutz, Kontakt CO). CO-E-Mail wird dynamisch aus cfgGlobal als mailto gesetzt (renderHilfe).

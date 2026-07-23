@@ -176,6 +176,21 @@ input:focus, select:focus, textarea:focus { outline: 2px solid var(--primary); o
 .settings-fs legend { font-weight: 700; color: var(--azur); padding: 0 6px; }
 #btnSaveSettings { margin-top: 18px; }
 
+/* Hilfe */
+.help { max-width: 760px; line-height: 1.55; }
+.help h3 { margin: 22px 0 8px; font-size: 16px; color: var(--navy);
+  border-bottom: 2px solid var(--lichtblau); padding-bottom: 4px; }
+.help p { margin: 8px 0; }
+.help ol, .help ul { margin: 8px 0; padding-left: 22px; }
+.help li { margin: 5px 0; }
+.help a { color: var(--azur); }
+.ampel { list-style: none; padding-left: 0; }
+.ampel li { display: flex; align-items: flex-start; gap: 9px; }
+.dot { flex: 0 0 auto; width: 14px; height: 14px; border-radius: 50%; margin-top: 4px; }
+.dot-green { background: var(--green); }
+.dot-yellow { background: var(--orange); }
+.dot-red { background: var(--red); }
+
 /* Modal */
 .modal {
   position: fixed; inset: 0; background: rgba(20,30,40,.5);

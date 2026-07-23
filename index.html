@@ -31,6 +31,7 @@
       <button class="nav-btn" data-view="genehmigungen">Genehmigungen <span class="badge-count" id="badgeGenehmigungen" hidden></span></button>
       <button class="nav-btn" data-view="auswertung" id="navAuswertung" hidden>Auswertung</button>
       <button class="nav-btn" data-view="einstellungen" id="navEinstellungen" hidden>Einstellungen</button>
+      <button class="nav-btn" data-view="hilfe">Hilfe</button>
     </nav>
   </header>
 
@@ -158,6 +159,57 @@
       <div class="card">
         <h2>Einstellungen</h2>
         <div id="einstellungenContent"></div>
+      </div>
+    </section>
+
+    <!-- Hilfe -->
+    <section id="view-hilfe" class="view">
+      <div class="card help">
+        <h2>ZAPP – kurz erklärt</h2>
+        <p>Mit der <strong>Zuwendungs-App (ZAPP)</strong> erfassen Sie Geschenke, Einladungen,
+           Bewirtungen und ähnliche Zuwendungen – sowohl <em>angenommene</em> als auch <em>gewährte</em>.
+           So bleiben wir bei Geschenken transparent und erfüllen die Anforderungen der
+           Anti-Korruptions-Vorgaben (u. a. FCPA, UK Bribery Act).</p>
+
+        <h3>Was muss ich melden?</h3>
+        <p>Jede Zuwendung mit oder von einem Geschäftspartner: Geschenke, Bewirtungen,
+           Einladungen zu Veranstaltungen, übernommene Reisekosten u. Ä. – gegeben oder empfangen.
+           <strong>Im Zweifel lieber melden.</strong></p>
+
+        <h3>So funktioniert die Bewertung</h3>
+        <p>Beim Ausfüllen zeigt ein farbiges Feld sofort, was mit Ihrer Meldung passiert:</p>
+        <ul class="ampel">
+          <li><span class="dot dot-green"></span> <strong>Grün</strong> – keine Dokumentation oder Genehmigung nötig, die Meldung wird nur gespeichert.</li>
+          <li><span class="dot dot-yellow"></span> <strong>Gelb</strong> – dokumentationspflichtig, aber keine Genehmigung erforderlich.</li>
+          <li><span class="dot dot-red"></span> <strong>Rot</strong> – genehmigungspflichtig, der Vorgang geht automatisch an die Genehmiger.</li>
+        </ul>
+        <p>Ob grün, gelb oder rot hängt ab von: <strong>Betrag</strong>, ob der Empfänger ein
+           <strong>Amtsträger</strong> ist (strengere Grenzen), der <strong>Jahressumme</strong> bei
+           demselben Partner (Kumulierung) und einer eventuellen <strong>laufenden Ausschreibung</strong>
+           mit dem Partner.</p>
+
+        <h3>Ablauf einer Meldung</h3>
+        <ol>
+          <li>Reiter <strong>Neue Zuwendung</strong> ausfüllen (Pflichtfelder mit *).</li>
+          <li>Belege als <strong>Anlage</strong> hinzufügen (Rechnung, Beleg, Mailverkehr).</li>
+          <li><strong>Melden</strong> – Sie erhalten sofort eine Rückmeldung.</li>
+          <li>Ist eine Genehmigung nötig, entscheiden Stufe 1 (Ihre Führungskraft bzw. der
+              festgelegte Genehmiger) und Stufe 2 (Compliance Officer). Über das Ergebnis
+              werden Sie per E-Mail informiert.</li>
+        </ol>
+
+        <h3>Meine Vorgänge &amp; Anlagen</h3>
+        <p>Unter <strong>Meine Vorgänge</strong> sehen Sie den Status Ihrer Meldungen und können
+           filtern. Anlagen lassen sich im Vorgang direkt öffnen; bei Genehmigungen werden sie den
+           Genehmigern mitgeschickt.</p>
+
+        <h3>Datenschutz</h3>
+        <p>Sie sehen nur Ihre <strong>eigenen</strong> Vorgänge. Nur das Compliance Office kann alle
+           Meldungen auswerten. Nach Ablauf der Aufbewahrungsfrist werden Vorgänge automatisch
+           anonymisiert.</p>
+
+        <h3>Fragen?</h3>
+        <p>Wenden Sie sich an das Compliance Office: <a id="hilfeCo" href="#">Compliance Officer</a>.</p>
       </div>
     </section>
 
