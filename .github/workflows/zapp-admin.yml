@@ -1,0 +1,41 @@
+name: ZAPP Admin
+
+# Rollen in ZAPP_Konfiguration (Zeile "Allgemein") ohne SharePoint-Login setzen.
+# Manuell starten: Actions -> ZAPP Admin -> Run workflow (Felder ausfuellen).
+# Leere Felder bleiben unveraendert. Nur Repo-Mitarbeiter koennen dies ausloesen.
+
+on:
+  workflow_dispatch:
+    inputs:
+      co_email:
+        description: "Compliance Officer E-Mail"
+        required: false
+        default: ""
+      vertreter_email:
+        description: "Vertreter E-Mail"
+        required: false
+        default: ""
+      admin_emails:
+        description: "Administratoren (mit ; getrennt)"
+        required: false
+        default: ""
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Konfiguration setzen
+        env:
+          ZAPP_TENANT_ID: ${{ secrets.ZAPP_TENANT_ID }}
+          ZAPP_CLIENT_ID: ${{ secrets.ZAPP_CLIENT_ID }}
+          ZAPP_CLIENT_SECRET: ${{ secrets.ZAPP_CLIENT_SECRET }}
+          ZAPP_SITE_HOST: dihag.sharepoint.com
+          ZAPP_SITE_PATH: /sites/IT
+          ZAPP_SET_CO: ${{ inputs.co_email }}
+          ZAPP_SET_VERTRETER: ${{ inputs.vertreter_email }}
+          ZAPP_SET_ADMINS: ${{ inputs.admin_emails }}
+        run: python cron/set_config.py
