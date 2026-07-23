@@ -2,9 +2,9 @@
 $ErrorActionPreference = "Stop"
 $g = "https://graph.microsoft.com/v1.0"
 
-# Compliance Officer / Vertreter / Administrator der ZAPP.
-# fedorov@dihag.com ist bewusst NICHT hier -> einfacher Nutzer ohne Einstellungsrechte.
-$AdminEmail = "administrator@dihag.com"
+# Rollen der ZAPP. fedorov@dihag.com ist bewusst NICHT hier -> einfacher Nutzer.
+$CoEmail    = "compliance@dihag.com"     # Compliance Officer: Stufe-2-Genehmigung + Benachrichtigungen
+$AdminEmail = "administrator@dihag.com"  # Administrator (Einstellungen) + Vertreter (anmeldefaehiger Ersatz-Genehmiger)
 
 $site = Invoke-MgGraphRequest -Method GET -Uri "$g/sites/dihag.sharepoint.com:/sites/IT"
 $sid = $site.id
@@ -80,7 +80,7 @@ foreach ($s in $seed) {
     $fields = $s + @{
         ZweistufigAktiv = $true
         ErinnerungNachTagen = 3; EskalationNachTagen = 7; AufbewahrungJahre = 6
-        ComplianceOfficerEmail = $AdminEmail
+        ComplianceOfficerEmail = $CoEmail
         VertreterEmail = $AdminEmail
     }
     Invoke-MgGraphRequest -Method POST -Uri "$g/sites/$sid/lists/ZAPP_Konfiguration/items" `
@@ -91,7 +91,7 @@ foreach ($s in $seed) {
 # --- Globale Rollen-Zeile 'Allgemein' (wird von der App-Einstellungsseite gepflegt) ---
 # Upsert: legt die Zeile an oder korrigiert die Rollenfelder (falls zuvor mit fedorov geseedet).
 $allgFields = @{
-    ComplianceOfficerEmail = $AdminEmail
+    ComplianceOfficerEmail = $CoEmail
     VertreterEmail = $AdminEmail
     AdminEmails = $AdminEmail
     Genehmiger1Modus = "Fuehrungskraft"   # oder "Fest"
@@ -101,11 +101,11 @@ $allgRow = $rows | Where-Object { $_.fields.Title -eq "Allgemein" } | Select-Obj
 if ($allgRow) {
     Invoke-MgGraphRequest -Method PATCH -Uri "$g/sites/$sid/lists/ZAPP_Konfiguration/items/$($allgRow.id)/fields" `
         -Body ($allgFields | ConvertTo-Json -Depth 4) -ContentType "application/json" | Out-Null
-    Write-Host "Konfig-Zeile 'Allgemein' aktualisiert (CO/Admin = $AdminEmail)"
+    Write-Host "Konfig-Zeile 'Allgemein' aktualisiert (CO = $CoEmail, Admin/Vertreter = $AdminEmail)"
 } else {
     Invoke-MgGraphRequest -Method POST -Uri "$g/sites/$sid/lists/ZAPP_Konfiguration/items" `
         -Body (@{ fields = ($allgFields + @{ Title = "Allgemein" }) } | ConvertTo-Json -Depth 4) -ContentType "application/json" | Out-Null
-    Write-Host "Konfig-Zeile 'Allgemein' angelegt (CO/Admin = $AdminEmail)"
+    Write-Host "Konfig-Zeile 'Allgemein' angelegt (CO = $CoEmail, Admin/Vertreter = $AdminEmail)"
 }
 
 # --- Dokumentbibliothek ZAPP_Anlagen ---------------------------------------

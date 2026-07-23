@@ -65,3 +65,7 @@
 ## 2026-07-20 – Hilfe-Reiter
 
 - Reiter "Hilfe" fuer alle Nutzer (nicht versteckt): kurze Doku (Zweck, was melden, Ampel-Bewertung gruen/gelb/rot, Ablauf, Meine Vorgaenge/Anlagen, Datenschutz, Kontakt CO). CO-E-Mail wird dynamisch aus cfgGlobal als mailto gesetzt (renderHilfe).
+
+## 2026-07-23 – Compliance Officer = compliance@dihag.com
+
+- CO (Stufe-2-Genehmigung + Benachrichtigungen) = compliance@dihag.com; Admin/Vertreter bleiben administrator@dihag.com. setup-zapp.ps1: $CoEmail eingefuehrt, Allgemein-Upsert + Typ-Zeilen-Seed getrennt.
