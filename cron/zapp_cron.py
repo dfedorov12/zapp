@@ -25,7 +25,7 @@ SECRET   = os.environ["ZAPP_CLIENT_SECRET"]
 HOST     = os.environ.get("ZAPP_SITE_HOST", "dihag.sharepoint.com")
 SITEPATH = os.environ.get("ZAPP_SITE_PATH", "/sites/IT")
 SENDER   = os.environ.get("ZAPP_SENDER", "administrator@dihag.com")
-APP_URL  = os.environ.get("ZAPP_APP_URL", "https://dfedorov12.github.io/zapp/")
+APP_URL  = os.environ.get("ZAPP_APP_URL", "https://zapp.dihag.de/")
 
 LIST        = "ZAPP"
 CONFIG_LIST = "ZAPP_Konfiguration"

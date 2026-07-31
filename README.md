@@ -4,7 +4,7 @@ Compliance-App zur Erfassung, Bewertung und Genehmigung von Zuwendungen und Gesc
 (Anti-Korruption, FCPA, UK Bribery Act). SPA auf GitHub Pages, Daten in SharePoint via
 Microsoft Graph, Anmeldung via MSAL.
 
-**Live:** https://dfedorov12.github.io/zapp/
+**Live:** https://zapp.dihag.de/ (GitHub Pages Custom Domain; `dfedorov12.github.io/zapp` leitet dorthin um)
 
 ## Funktionsweise
 
@@ -23,7 +23,7 @@ Microsoft Graph, Anmeldung via MSAL.
 ## Setup
 
 1. **Entra-App** „Dihag ZAPP“: Plattform *Single-page application* mit Redirect-URIs
-   `https://dfedorov12.github.io/zapp/` und `http://localhost:3000`.
+   `https://zapp.dihag.de/`, `https://dfedorov12.github.io/zapp/` und `http://localhost:3000`.
    Delegierte Graph-Berechtigungen: `User.Read`, `User.ReadBasic.All`,
    `Sites.ReadWrite.All` (Admin-Consent), `Mail.Send`, `User.Read.All` (Admin-Consent,
    für Manager-Lookup Stufe 1).

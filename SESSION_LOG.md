@@ -70,3 +70,8 @@
 
 - CO (Stufe-2-Genehmigung + Benachrichtigungen) = compliance@dihag.com; Admin/Vertreter bleiben administrator@dihag.com. setup-zapp.ps1: $CoEmail eingefuehrt, Allgemein-Upsert + Typ-Zeilen-Seed getrennt.
 - Live-Umstellung via neuem App-only Workflow zapp-admin.yml + cron/set_config.py (kein SharePoint-Login): Allgemein CO=compliance@dihag.com, Vertreter/Admin=administrator@dihag.com bestaetigt.
+
+## 2026-07-23 – Custom Domain zapp.dihag.de
+
+- CNAME=zapp.dihag.de; ZAPP_APP_URL (Workflow) + APP_URL-Default (zapp_cron.py) + README auf https://zapp.dihag.de/. Deep-Links/MSAL-Redirect sind dynamisch (origin+pathname), kein Codeeingriff.
+- Offen extern: DNS CNAME zapp->dfedorov12.github.io; Entra-Redirect-URI https://zapp.dihag.de/ ergaenzen.

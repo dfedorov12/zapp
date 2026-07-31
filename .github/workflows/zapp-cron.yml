@@ -24,5 +24,5 @@ jobs:
           ZAPP_SITE_HOST: dihag.sharepoint.com
           ZAPP_SITE_PATH: /sites/IT
           ZAPP_SENDER: administrator@dihag.com
-          ZAPP_APP_URL: https://dfedorov12.github.io/zapp/
+          ZAPP_APP_URL: https://zapp.dihag.de/
         run: python cron/zapp_cron.py
