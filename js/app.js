@@ -352,6 +352,14 @@ async function entscheiden(item, genehmigt) {
   const stufe = (f.Status || "").includes("Stufe 2") ? 2 : 1;
   const cfg = cfgFor(f.EmpfaengerTyp);
   const kommentarText = $("modalKommentar").value.trim();
+  // Bei Ablehnung ist eine Begründung verpflichtend (Nachvollziehbarkeit/Compliance).
+  if (!genehmigt && !kommentarText) {
+    showToast("Bitte eine Begründung für die Ablehnung angeben.", 5000);
+    const k = $("modalKommentar");
+    k.classList.add("input-error");
+    k.focus();
+    return;
+  }
   const stempel = `[${genehmigt ? "Genehmigt" : "Abgelehnt"} durch ${state.me.displayName} am ${new Date().toLocaleDateString("de-DE")}]`
     + (kommentarText ? " " + kommentarText : "");
 
@@ -788,6 +796,7 @@ function openDetail(item) {
       <div id="modalAnlagen" class="anlagen-list">Anlagen werden geladen …</div>
     </div>`;
   $("modalKommentar").value = "";
+  $("modalKommentar").classList.remove("input-error");
   $("modalActions").hidden = !darfEntscheiden(item);
   $("detailModal").hidden = false;
   ladeAnlagenInModal(f.Title);
@@ -842,6 +851,7 @@ function bindUi() {
   $("detailModal").addEventListener("click", e => { if (e.target === $("detailModal")) closeModal(); });
   $("btnGenehmigen").addEventListener("click", () => _modalItem && entscheiden(_modalItem, true));
   $("btnAblehnen").addEventListener("click", () => _modalItem && entscheiden(_modalItem, false));
+  $("modalKommentar").addEventListener("input", () => $("modalKommentar").classList.remove("input-error"));
 }
 
 // ---------------------------------------------------------------------------

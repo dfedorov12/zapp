@@ -80,3 +80,7 @@
 
 - prozess/: ZAPP-Zuwendungsprozess.bpmn (verzweigt: 3-Wege-Bewertung, 2-stufige Genehmigung, Ablehnungen) + ZAPP-Cron-Ueberwachung.bpmn (Timer, taegliche Ueberwachung) + build_zapp_bpmn.js (Generator) + Beschreibung.md.
 - In echtem bpmn-js verifiziert: beide fehlerfrei geladen (0 Warnungen). Zum Import ins RMS Prozesse (Button Importieren).
+
+## 2026-07-23 – Ablehnung: Kommentar verpflichtend
+
+- entscheiden(): bei genehmigt=false wird ein Kommentar erzwungen (Toast + rote Markierung .input-error + Fokus, kein Speichern). Genehmigung bleibt ohne Kommentar moeglich. Platzhalter/Placeholder + CSS ergaenzt; Fehlerklasse wird beim Tippen und Dialog-Oeffnen entfernt.

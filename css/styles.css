@@ -217,6 +217,7 @@ input:focus, select:focus, textarea:focus { outline: 2px solid var(--primary); o
 }
 .anlagen-list a:hover { border-color: var(--azur); }
 #modalActions { margin-top: 16px; }
+.input-error { border-color: var(--red) !important; outline: 2px solid var(--red); }
 #modalActions textarea { width: 100%; margin-bottom: 10px; }
 .modal-btns { display: flex; gap: 10px; }
 .btn-approve {
