@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" id="Definitions_ZAPP" targetNamespace="http://bpmn.io/schema/bpmn">
+  <bpmn:process id="Process_ZAPP" isExecutable="false">
+    <bpmn:documentation>ZAPP – Zuwendungs-App. Erfassung, Bewertung und Genehmigung angenommener und gewährter Zuwendungen/Geschenke (Anti-Korruption, FCPA, UK Bribery Act). Die Bewertung ergibt sich aus Betrag, Empfängertyp (Amtsträger), Jahressumme je Geschäftspartner (Kumulierung) und Red Flag (laufende Ausschreibung). Genehmigung zweistufig: Stufe 1 Führungskraft bzw. fester Genehmiger, Stufe 2 Compliance Officer. Umsetzung als SPA (zapp.dihag.de) mit MS Graph/SharePoint. Im Einklang mit der Anti-Korruptions-/Zuwendungsrichtlinie.</bpmn:documentation>
+    <bpmn:startEvent id="Start" name="Zuwendung angefallen"><bpmn:outgoing>f1</bpmn:outgoing></bpmn:startEvent>
+    <bpmn:task id="T1" name="Antragsteller: Zuwendung erfassen und Belege anhängen"><bpmn:incoming>f1</bpmn:incoming><bpmn:outgoing>f2</bpmn:outgoing></bpmn:task>
+    <bpmn:task id="T2" name="ZAPP: Bewertung – Betrag, Amtsträger, Kumulierung, Red Flag"><bpmn:incoming>f2</bpmn:incoming><bpmn:outgoing>f3</bpmn:outgoing></bpmn:task>
+    <bpmn:exclusiveGateway id="GwGen" name="genehmigungs-pflichtig?"><bpmn:incoming>f3</bpmn:incoming><bpmn:outgoing>f4</bpmn:outgoing><bpmn:outgoing>f15</bpmn:outgoing></bpmn:exclusiveGateway>
+    <bpmn:task id="T3" name="ZAPP: an Genehmiger Stufe 1 (Führungskraft / fester Genehmiger) senden"><bpmn:incoming>f4</bpmn:incoming><bpmn:outgoing>f5</bpmn:outgoing></bpmn:task>
+    <bpmn:exclusiveGateway id="GwS1" name="Stufe 1 genehmigt?"><bpmn:incoming>f5</bpmn:incoming><bpmn:outgoing>f6</bpmn:outgoing><bpmn:outgoing>f12</bpmn:outgoing></bpmn:exclusiveGateway>
+    <bpmn:exclusiveGateway id="GwZwei" name="zweistufig?"><bpmn:incoming>f6</bpmn:incoming><bpmn:outgoing>f7</bpmn:outgoing><bpmn:outgoing>f11</bpmn:outgoing></bpmn:exclusiveGateway>
+    <bpmn:task id="T4" name="ZAPP: an Compliance Officer (Stufe 2) senden"><bpmn:incoming>f7</bpmn:incoming><bpmn:outgoing>f8</bpmn:outgoing></bpmn:task>
+    <bpmn:exclusiveGateway id="GwS2" name="Stufe 2 genehmigt?"><bpmn:incoming>f8</bpmn:incoming><bpmn:outgoing>f9</bpmn:outgoing><bpmn:outgoing>f13</bpmn:outgoing></bpmn:exclusiveGateway>
+    <bpmn:task id="TGen" name="ZAPP: Antragsteller – genehmigt informieren"><bpmn:incoming>f9</bpmn:incoming><bpmn:incoming>f11</bpmn:incoming><bpmn:outgoing>f10</bpmn:outgoing></bpmn:task>
+    <bpmn:endEvent id="EndGen" name="Zuwendung genehmigt"><bpmn:incoming>f10</bpmn:incoming></bpmn:endEvent>
+    <bpmn:task id="TRej" name="ZAPP: Antragsteller – abgelehnt informieren"><bpmn:incoming>f12</bpmn:incoming><bpmn:incoming>f13</bpmn:incoming><bpmn:outgoing>f14</bpmn:outgoing></bpmn:task>
+    <bpmn:endEvent id="EndAbg" name="Zuwendung abgelehnt"><bpmn:incoming>f14</bpmn:incoming></bpmn:endEvent>
+    <bpmn:exclusiveGateway id="GwDok" name="dokumentations-pflichtig?"><bpmn:incoming>f15</bpmn:incoming><bpmn:outgoing>f16</bpmn:outgoing><bpmn:outgoing>f18</bpmn:outgoing></bpmn:exclusiveGateway>
+    <bpmn:task id="TDoku" name="ZAPP: dokumentieren und Antragsteller informieren"><bpmn:incoming>f16</bpmn:incoming><bpmn:outgoing>f17</bpmn:outgoing></bpmn:task>
+    <bpmn:endEvent id="EndDok" name="dokumentiert"><bpmn:incoming>f17</bpmn:incoming></bpmn:endEvent>
+    <bpmn:task id="TKeine" name="ZAPP: speichern und Antragsteller informieren"><bpmn:incoming>f18</bpmn:incoming><bpmn:outgoing>f19</bpmn:outgoing></bpmn:task>
+    <bpmn:endEvent id="EndKeine" name="kein Handlungsbedarf"><bpmn:incoming>f19</bpmn:incoming></bpmn:endEvent>
+    <bpmn:sequenceFlow id="f1" sourceRef="Start" targetRef="T1" />
+    <bpmn:sequenceFlow id="f2" sourceRef="T1" targetRef="T2" />
+    <bpmn:sequenceFlow id="f3" sourceRef="T2" targetRef="GwGen" />
+    <bpmn:sequenceFlow id="f4" name="ja" sourceRef="GwGen" targetRef="T3" />
+    <bpmn:sequenceFlow id="f5" sourceRef="T3" targetRef="GwS1" />
+    <bpmn:sequenceFlow id="f6" name="ja" sourceRef="GwS1" targetRef="GwZwei" />
+    <bpmn:sequenceFlow id="f7" name="ja" sourceRef="GwZwei" targetRef="T4" />
+    <bpmn:sequenceFlow id="f8" sourceRef="T4" targetRef="GwS2" />
+    <bpmn:sequenceFlow id="f9" name="ja" sourceRef="GwS2" targetRef="TGen" />
+    <bpmn:sequenceFlow id="f10" sourceRef="TGen" targetRef="EndGen" />
+    <bpmn:sequenceFlow id="f11" name="nein" sourceRef="GwZwei" targetRef="TGen" />
+    <bpmn:sequenceFlow id="f12" name="nein" sourceRef="GwS1" targetRef="TRej" />
+    <bpmn:sequenceFlow id="f13" name="nein" sourceRef="GwS2" targetRef="TRej" />
+    <bpmn:sequenceFlow id="f14" sourceRef="TRej" targetRef="EndAbg" />
+    <bpmn:sequenceFlow id="f15" name="nein" sourceRef="GwGen" targetRef="GwDok" />
+    <bpmn:sequenceFlow id="f16" name="ja" sourceRef="GwDok" targetRef="TDoku" />
+    <bpmn:sequenceFlow id="f17" sourceRef="TDoku" targetRef="EndDok" />
+    <bpmn:sequenceFlow id="f18" name="nein" sourceRef="GwDok" targetRef="TKeine" />
+    <bpmn:sequenceFlow id="f19" sourceRef="TKeine" targetRef="EndKeine" />
+  </bpmn:process>
+  <bpmndi:BPMNDiagram id="Dia_1">
+    <bpmndi:BPMNPlane id="Plane_1" bpmnElement="Process_ZAPP">
+      <bpmndi:BPMNShape id="Start_di" bpmnElement="Start"><dc:Bounds x="120" y="142" width="36" height="36" /><bpmndi:BPMNLabel><dc:Bounds x="100" y="182" width="116" height="27" /></bpmndi:BPMNLabel></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="T1_di" bpmnElement="T1"><dc:Bounds x="200" y="120" width="160" height="80" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="T2_di" bpmnElement="T2"><dc:Bounds x="420" y="120" width="170" height="80" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="GwGen_di" bpmnElement="GwGen" isMarkerVisible="true"><dc:Bounds x="650" y="135" width="50" height="50" /><bpmndi:BPMNLabel><dc:Bounds x="630" y="189" width="130" height="27" /></bpmndi:BPMNLabel></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="T3_di" bpmnElement="T3"><dc:Bounds x="760" y="120" width="170" height="80" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="GwS1_di" bpmnElement="GwS1" isMarkerVisible="true"><dc:Bounds x="990" y="135" width="50" height="50" /><bpmndi:BPMNLabel><dc:Bounds x="970" y="189" width="130" height="27" /></bpmndi:BPMNLabel></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="GwZwei_di" bpmnElement="GwZwei" isMarkerVisible="true"><dc:Bounds x="1100" y="135" width="50" height="50" /><bpmndi:BPMNLabel><dc:Bounds x="1080" y="189" width="130" height="27" /></bpmndi:BPMNLabel></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="T4_di" bpmnElement="T4"><dc:Bounds x="1210" y="120" width="170" height="80" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="GwS2_di" bpmnElement="GwS2" isMarkerVisible="true"><dc:Bounds x="1440" y="135" width="50" height="50" /><bpmndi:BPMNLabel><dc:Bounds x="1420" y="189" width="130" height="27" /></bpmndi:BPMNLabel></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="TGen_di" bpmnElement="TGen"><dc:Bounds x="1550" y="120" width="170" height="80" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="EndGen_di" bpmnElement="EndGen"><dc:Bounds x="1770" y="142" width="36" height="36" /><bpmndi:BPMNLabel><dc:Bounds x="1750" y="182" width="116" height="27" /></bpmndi:BPMNLabel></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="TRej_di" bpmnElement="TRej"><dc:Bounds x="1210" y="320" width="170" height="80" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="EndAbg_di" bpmnElement="EndAbg"><dc:Bounds x="1440" y="342" width="36" height="36" /><bpmndi:BPMNLabel><dc:Bounds x="1420" y="382" width="116" height="27" /></bpmndi:BPMNLabel></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="GwDok_di" bpmnElement="GwDok" isMarkerVisible="true"><dc:Bounds x="650" y="320" width="50" height="50" /><bpmndi:BPMNLabel><dc:Bounds x="630" y="374" width="130" height="27" /></bpmndi:BPMNLabel></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="TDoku_di" bpmnElement="TDoku"><dc:Bounds x="760" y="300" width="170" height="80" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="EndDok_di" bpmnElement="EndDok"><dc:Bounds x="980" y="322" width="36" height="36" /><bpmndi:BPMNLabel><dc:Bounds x="960" y="362" width="116" height="27" /></bpmndi:BPMNLabel></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="TKeine_di" bpmnElement="TKeine"><dc:Bounds x="760" y="440" width="170" height="80" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="EndKeine_di" bpmnElement="EndKeine"><dc:Bounds x="980" y="462" width="36" height="36" /><bpmndi:BPMNLabel><dc:Bounds x="960" y="502" width="116" height="27" /></bpmndi:BPMNLabel></bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="f1_di" bpmnElement="f1"><di:waypoint x="156" y="160" /><di:waypoint x="200" y="160" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="f2_di" bpmnElement="f2"><di:waypoint x="360" y="160" /><di:waypoint x="420" y="160" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="f3_di" bpmnElement="f3"><di:waypoint x="590" y="160" /><di:waypoint x="650" y="160" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="f4_di" bpmnElement="f4"><di:waypoint x="700" y="160" /><di:waypoint x="760" y="160" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="f5_di" bpmnElement="f5"><di:waypoint x="930" y="160" /><di:waypoint x="990" y="160" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="f6_di" bpmnElement="f6"><di:waypoint x="1040" y="160" /><di:waypoint x="1100" y="160" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="f7_di" bpmnElement="f7"><di:waypoint x="1150" y="160" /><di:waypoint x="1210" y="160" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="f8_di" bpmnElement="f8"><di:waypoint x="1380" y="160" /><di:waypoint x="1440" y="160" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="f9_di" bpmnElement="f9"><di:waypoint x="1490" y="160" /><di:waypoint x="1550" y="160" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="f10_di" bpmnElement="f10"><di:waypoint x="1720" y="160" /><di:waypoint x="1770" y="160" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="f11_di" bpmnElement="f11"><di:waypoint x="1125" y="135" /><di:waypoint x="1125" y="90" /><di:waypoint x="1635" y="90" /><di:waypoint x="1635" y="120" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="f12_di" bpmnElement="f12"><di:waypoint x="1015" y="185" /><di:waypoint x="1015" y="360" /><di:waypoint x="1210" y="360" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="f13_di" bpmnElement="f13"><di:waypoint x="1465" y="185" /><di:waypoint x="1465" y="360" /><di:waypoint x="1380" y="360" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="f14_di" bpmnElement="f14"><di:waypoint x="1380" y="360" /><di:waypoint x="1440" y="360" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="f15_di" bpmnElement="f15"><di:waypoint x="675" y="185" /><di:waypoint x="675" y="320" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="f16_di" bpmnElement="f16"><di:waypoint x="700" y="345" /><di:waypoint x="760" y="345" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="f17_di" bpmnElement="f17"><di:waypoint x="930" y="340" /><di:waypoint x="980" y="340" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="f18_di" bpmnElement="f18"><di:waypoint x="675" y="370" /><di:waypoint x="675" y="480" /><di:waypoint x="760" y="480" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="f19_di" bpmnElement="f19"><di:waypoint x="930" y="480" /><di:waypoint x="980" y="480" /></bpmndi:BPMNEdge>
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+</bpmn:definitions>

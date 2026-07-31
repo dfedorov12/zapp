@@ -75,3 +75,8 @@
 
 - CNAME=zapp.dihag.de; ZAPP_APP_URL (Workflow) + APP_URL-Default (zapp_cron.py) + README auf https://zapp.dihag.de/. Deep-Links/MSAL-Redirect sind dynamisch (origin+pathname), kein Codeeingriff.
 - Offen extern: DNS CNAME zapp->dfedorov12.github.io; Entra-Redirect-URI https://zapp.dihag.de/ ergaenzen.
+
+## 2026-07-23 – BPMN fuer RMS
+
+- prozess/: ZAPP-Zuwendungsprozess.bpmn (verzweigt: 3-Wege-Bewertung, 2-stufige Genehmigung, Ablehnungen) + ZAPP-Cron-Ueberwachung.bpmn (Timer, taegliche Ueberwachung) + build_zapp_bpmn.js (Generator) + Beschreibung.md.
+- In echtem bpmn-js verifiziert: beide fehlerfrei geladen (0 Warnungen). Zum Import ins RMS Prozesse (Button Importieren).

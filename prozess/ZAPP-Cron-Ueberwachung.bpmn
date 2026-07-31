@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" id="Definitions_ZAPP" targetNamespace="http://bpmn.io/schema/bpmn">
+  <bpmn:process id="Process_ZAPP" isExecutable="false">
+    <bpmn:documentation>ZAPP – Tägliche Überwachung (App-only-Cron via GitHub Actions). Läuft täglich und ergänzt die App um zeitgesteuerte Aufgaben: Erinnerung/Eskalation offener Genehmigungen, tenant-weite Kumulierungsprüfung (Summe je Partner über alle Antragsteller) und DSGVO-Archivierung nach Ablauf der Aufbewahrungsfrist. Versand als administrator@dihag.com.</bpmn:documentation>
+    <bpmn:startEvent id="CStart" name="täglich 05:00 Uhr"><bpmn:outgoing>c1</bpmn:outgoing><bpmn:timerEventDefinition /></bpmn:startEvent>
+    <bpmn:task id="CT1" name="ZAPP-Cron: alle Vorgänge laden"><bpmn:incoming>c1</bpmn:incoming><bpmn:outgoing>c2</bpmn:outgoing></bpmn:task>
+    <bpmn:task id="CT2" name="Erinnerungen und Eskalationen für überfällige Genehmigungen senden"><bpmn:incoming>c2</bpmn:incoming><bpmn:outgoing>c3</bpmn:outgoing></bpmn:task>
+    <bpmn:task id="CT3" name="Kumulierung je Partner prüfen und ggf. nachträglich zur Genehmigung vorlegen"><bpmn:incoming>c3</bpmn:incoming><bpmn:outgoing>c4</bpmn:outgoing></bpmn:task>
+    <bpmn:task id="CT4" name="Fällige Vorgänge anonymisieren, Anlagen löschen, archivieren (DSGVO)"><bpmn:incoming>c4</bpmn:incoming><bpmn:outgoing>c5</bpmn:outgoing></bpmn:task>
+    <bpmn:endEvent id="CEnd" name="Überwachung abgeschlossen"><bpmn:incoming>c5</bpmn:incoming></bpmn:endEvent>
+    <bpmn:sequenceFlow id="c1" sourceRef="CStart" targetRef="CT1" />
+    <bpmn:sequenceFlow id="c2" sourceRef="CT1" targetRef="CT2" />
+    <bpmn:sequenceFlow id="c3" sourceRef="CT2" targetRef="CT3" />
+    <bpmn:sequenceFlow id="c4" sourceRef="CT3" targetRef="CT4" />
+    <bpmn:sequenceFlow id="c5" sourceRef="CT4" targetRef="CEnd" />
+  </bpmn:process>
+  <bpmndi:BPMNDiagram id="Dia_1">
+    <bpmndi:BPMNPlane id="Plane_1" bpmnElement="Process_ZAPP">
+      <bpmndi:BPMNShape id="CStart_di" bpmnElement="CStart"><dc:Bounds x="120" y="122" width="36" height="36" /><bpmndi:BPMNLabel><dc:Bounds x="100" y="162" width="116" height="27" /></bpmndi:BPMNLabel></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="CT1_di" bpmnElement="CT1"><dc:Bounds x="200" y="100" width="160" height="80" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="CT2_di" bpmnElement="CT2"><dc:Bounds x="420" y="100" width="180" height="80" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="CT3_di" bpmnElement="CT3"><dc:Bounds x="660" y="100" width="190" height="80" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="CT4_di" bpmnElement="CT4"><dc:Bounds x="910" y="100" width="190" height="80" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="CEnd_di" bpmnElement="CEnd"><dc:Bounds x="1160" y="122" width="36" height="36" /><bpmndi:BPMNLabel><dc:Bounds x="1140" y="162" width="116" height="27" /></bpmndi:BPMNLabel></bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="c1_di" bpmnElement="c1"><di:waypoint x="156" y="140" /><di:waypoint x="200" y="140" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="c2_di" bpmnElement="c2"><di:waypoint x="360" y="140" /><di:waypoint x="420" y="140" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="c3_di" bpmnElement="c3"><di:waypoint x="600" y="140" /><di:waypoint x="660" y="140" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="c4_di" bpmnElement="c4"><di:waypoint x="850" y="140" /><di:waypoint x="910" y="140" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="c5_di" bpmnElement="c5"><di:waypoint x="1100" y="140" /><di:waypoint x="1160" y="140" /></bpmndi:BPMNEdge>
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+</bpmn:definitions>
