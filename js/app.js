@@ -49,6 +49,8 @@ async function init() {
     if (vorgangId) {
       const item = state.items.find(i => String(i.id) === vorgangId);
       if (item) { switchView("genehmigungen"); openDetail(item); }
+    } else if (typeof maybeAutoStartTour === "function") {
+      maybeAutoStartTour();   // Kurz-Tutorial beim ersten Besuch
     }
   } catch (e) {
     $("loadingText").textContent = "Fehler beim Start: " + e.message;
@@ -852,6 +854,8 @@ function bindUi() {
   $("btnGenehmigen").addEventListener("click", () => _modalItem && entscheiden(_modalItem, true));
   $("btnAblehnen").addEventListener("click", () => _modalItem && entscheiden(_modalItem, false));
   $("modalKommentar").addEventListener("input", () => $("modalKommentar").classList.remove("input-error"));
+  $("btnTutorial")?.addEventListener("click", () => startTour(true));
+  $("tutorialLink")?.addEventListener("click", e => { e.preventDefault(); startTour(true); });
 }
 
 // ---------------------------------------------------------------------------

@@ -84,3 +84,8 @@
 ## 2026-07-23 – Ablehnung: Kommentar verpflichtend
 
 - entscheiden(): bei genehmigt=false wird ein Kommentar erzwungen (Toast + rote Markierung .input-error + Fokus, kein Speichern). Genehmigung bleibt ohne Kommentar moeglich. Platzhalter/Placeholder + CSS ergaenzt; Fehlerklasse wird beim Tippen und Dialog-Oeffnen entfernt.
+
+## 2026-07-23 – Kurz-Tutorial (Guided Tour)
+
+- js/tour.js: anklickbare 10-Schritt-Tour durch "Neue Zuwendung" (Richtung/Art, Wert/Datum, Partner, Amtstraeger/Ausschreibung, Ampel-Demo, Anlagen, Melden, Meine Vorgaenge) + Abschluss mit Verweis/Button auf Hilfe. Spotlight (box-shadow) + Tooltip, synchron positioniert (robust bei verborgenem Tab). Auto-Start beim ersten Besuch (localStorage zapp_tour_v1_done), Button "Kurz-Tutorial" + Link in Neue Zuwendung.
+- Verifiziert: Schrittabfolge, Spotlight-Zuschnitt aufs Feld, Demo-Ampel + Reset, Hilfe-Button, localStorage.

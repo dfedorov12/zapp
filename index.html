@@ -40,9 +40,13 @@
     <!-- Neue Zuwendung -->
     <section id="view-neu" class="view active">
       <div class="card">
-        <h2>Zuwendung melden</h2>
+        <div class="card-head">
+          <h2>Zuwendung melden</h2>
+          <button type="button" class="btn-tutorial" id="btnTutorial" title="Kurzes Tutorial zum Ausfüllen">❔ Kurz-Tutorial</button>
+        </div>
         <p class="hint">Erfassen Sie gegebene oder empfangene Geschenke, Einladungen und sonstige Zuwendungen.
-           Die App prüft automatisch, ob eine Dokumentation oder Genehmigung erforderlich ist.</p>
+           Die App prüft automatisch, ob eine Dokumentation oder Genehmigung erforderlich ist.
+           Neu hier? <a href="#" id="tutorialLink">Kurz-Tutorial starten</a> · alle Details im Reiter <b>Hilfe</b>.</p>
 
         <form id="formZuwendung">
           <div class="form-grid">
@@ -240,6 +244,7 @@
 
   <script src="js/config.js"></script>
   <script src="js/graph.js"></script>
+  <script src="js/tour.js"></script>
   <script src="js/app.js"></script>
 </body>
 </html>
