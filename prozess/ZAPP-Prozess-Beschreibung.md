@@ -1,7 +1,7 @@
 # ZAPP – Zuwendungsprozess (BPMN 2.0)
 
 Vollständige BPMN-Beschreibung des ZAPP-Tools zur Hinterlegung im
-Richtlinienmanagement (richtlinienmanagement.dihag-extern.com) unter **Prozesse**.
+Richtlinienmanagement (rms.dihag.de) unter **Prozesse**.
 
 Zwei Diagramme:
 - **ZAPP-Zuwendungsprozess.bpmn** – der fachliche Ablauf (Erfassung → Bewertung → Genehmigung).
